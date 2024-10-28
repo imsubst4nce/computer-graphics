@@ -1,4 +1,4 @@
-﻿//**********************************************
+﻿/*************/
 // Αυτό το αρχείο θα το χρησιμοποιήσετε
 // για να υλοποιήσετε την άσκηση 1Α της OpenGL
 //
@@ -7,7 +7,7 @@
 //
 // Α.Μ: 4937
 // ΟΝΟΜΑ: ΚΩΣΤΟΠΟΥΛΟΣ ΑΛΕΞΑΝΔΡΟΣ
-//**********************************************
+/*************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +31,7 @@ GLFWwindow* window;
 using namespace glm;
 using namespace std;
 
-//****************************************
+/*************/
 // Οι LoadShaders είναι black box για σας
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
@@ -176,17 +176,19 @@ int main(void)
 	// Grey background
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     
-	//***********************************************
+	/*************/
 	// Οι shaders σας είναι οι 
     // ProjectVertexShader.vertexshader
     // ProjectFragmentShader.fragmentshader
+    /*************/
 
 	GLuint programID = LoadShaders("ProjectVertexShader.vertexshader", "ProjectFragmentShader.fragmentshader");
 	
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 	
 	glm::mat4 Projection = glm::perspective(glm::radians(30.0f), 4.0f / 4.0f, 0.1f, 100.0f);
-	// Camera matrix
+	
+    // Camera matrix
 	glm::mat4 View = glm::lookAt(
 		glm::vec3(0, 0, 30), // Camera  in World Space
 		glm::vec3(0, 0, 0), // and looks at the origin
@@ -196,14 +198,12 @@ int main(void)
 	glm::mat4 Model = glm::mat4(1.0f);
 	glm::mat4 MVP = Projection * View * Model; 
     
-	//**************************************************
+	/*************/
 
     // amount of vetrices(every triangle has 3)
     int number_of_maze_vertices = 96; // 32 triangles * 3 vertices
 
     static const GLfloat maze_vertex_buffer_data[] = {
-        // every rect is made out of 2 triangles
-
         /*1st rectangle - top-left border*/
         -5.0f, 5.0f, 0.0f,
         -5.0f, 3.0f, 0.0f,
@@ -263,9 +263,7 @@ int main(void)
         -2.0f, 0.0f, 0.0f,
         -3.0f, 3.0f, 0.0f,
         -3.0f, 0.0f, 0.0f,
-
         //////
-
         -2.0f, 3.0f, 0.0f,
         -2.0f, 2.0f, 0.0f,
         1.0f, 3.0f, 0.0f,
@@ -276,27 +274,22 @@ int main(void)
         -1.0f, 0.0f, 0.0f,
         1.0f, 1.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
-        
         /////
-
         0.0f, 0.0f, 0.0f,
         0.0f, -2.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
         1.0f, -2.0f, 0.0f,
-
         /////
-
         1.0f, -1.0f, 0.0f,
         1.0f, -2.0f, 0.0f,
         3.0f, -1.0f, 0.0f,
         3.0f, -2.0f, 0.0f,
-
         /////
-
         2.0f, -2.0f, 0.0f,
         2.0f, -3.0f, 0.0f,
         3.0f, -2.0f, 0.0f,
         3.0f, -3.0f, 0.0f,
+
         /*16th rectangle - vertical top-right wall*/
         2.0f, 3.0f, 0.0f,
         2.0f, 0.0f, 0.0f,
@@ -356,7 +349,7 @@ int main(void)
 
     /*************/
 
-    // buffer of moveable char
+    // vertex buffer of moveable char
     static const GLfloat char_vertex_buffer_data[] = {
         -4.75f, 2.5f, 0.0f,
         -4.75f, 2.0f, 0.0f,
@@ -371,7 +364,7 @@ int main(void)
 
     /*************/
 
-    // generate the VAOs and VBOs
+    // generate the VAOs, VBOs EBOs
     GLuint mazevertexbuffer, charvertexbuffer, VAOs[2];
     unsigned int EBOs[2];
 	glGenVertexArrays(2, VAOs);
@@ -388,7 +381,7 @@ int main(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // setup character
+    // setup moveable character
     glBindVertexArray(VAOs[1]);
 	glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_STATIC_DRAW);
@@ -426,7 +419,6 @@ int main(void)
 	glDeleteBuffers(1, &mazevertexbuffer);
     glDeleteBuffers(1, &charvertexbuffer);
 	glDeleteVertexArrays(2, VAOs);
-    // glDeleteVertexArrays(1, &VAOs[1]);
     glDeleteBuffers(2, EBOs);
 	glDeleteProgram(programID);
 
