@@ -205,159 +205,156 @@ int main(void)
         // every rect is made out of 2 triangles
 
         /*1st rectangle - top-left border*/
-        // 1st triangle
         -5.0f, 5.0f, 0.0f,
-        -4.0f, 3.0f, 0.0f,
         -5.0f, 3.0f, 0.0f,
-        
-        // 2nd triangle
-        -4.0f, 3.0f, 0.0f,
-        -5.0f, 5.0f, 0.0f,
         -4.0f, 5.0f, 0.0f,
+        -4.0f, 3.0f, 0.0f,
 
         /*2nd rectangle - bottom-left border*/
         -5.0f, 1.5f, 0.0f,
-        -4.0f, -5.0f, 0.0f,
         -5.0f, -5.0f, 0.0f,
-        
         -4.0f, 1.5f, 0.0f,
-        -5.0f, 1.5f, 0.0f,
         -4.0f, -5.0f, 0.0f,
 
         /*3nd rectangle - top border*/
         -4.0f, 5.0f, 0.0f,
-        4.0f, 5.0f, 0.0f,
-        4.0f, 4.0f, 0.0f,
-
-        -4.0f, 5.0f, 0.0f,
         -4.0f, 4.0f, 0.0f,
+        4.0f, 5.0f, 0.0f,
         4.0f, 4.0f, 0.0f,
 
         /*4th rectangle - top-right border*/
-        5.0f, 5.0f, 0.0f,
-        5.0f, -1.5f, 0.0f,
-        4.0f, -1.5f, 0.0f,
-
-        5.0f, 5.0f, 0.0f,
         4.0f, 5.0f, 0.0f,
         4.0f, -1.5f, 0.0f,
+        5.0f, 5.0f, 0.0f,
+        5.0f, -1.5f, 0.0f,
 
         /*5th rectangle - bottom-right border*/
-        5.0f, -3.0f, 0.0f,
         4.0f, -3.0f, 0.0f,
         4.0f, -5.0f, 0.0f,
-
-        4.0f, -5.0f, 0.0f,
-        5.0f, -5.0f, 0.0f,
         5.0f, -3.0f, 0.0f,
+        5.0f, -5.0f, 0.0f,
 
         /*6th rectangle - bottom border*/
-        4.0f, -5.0f, 0.0f,
-        4.0f, -4.0f, 0.0f,
-        -4.0f, -5.0f, 0.0f,
-        
-        4.0f, -4.0f, 0.0f,
         -4.0f, -4.0f, 0.0f,
         -4.0f, -5.0f, 0.0f,
+        4.0f, -4.0f, 0.0f,
+        4.0f, -5.0f, 0.0f,
 
         /*7th rectangle - bottom bump #1*/
-        -3.0f, -4.0f, 0.0f,
         -3.0f, -3.0f, 0.0f,
-        -2.0f, -3.0f, 0.0f,
-        
-        -2.0f, -4.0f, 0.0f,
-        -2.0f, -3.0f, 0.0f,
         -3.0f, -4.0f, 0.0f,
+        -2.0f, -3.0f, 0.0f,
+        -2.0f, -4.0f, 0.0f,
 
         /*8th rectangle - bottom bump #2*/
-        -1.0f, -4.0f, 0.0f,
         -1.0f, -3.0f, 0.0f,
-        1.0f, -3.0f, 0.0f,
-        
         -1.0f, -4.0f, 0.0f,
         1.0f, -3.0f, 0.0f,
         1.0f, -4.0f, 0.0f,
 
         /*9th rectangle - horizontal mid-left wall*/
-        -3.0f, -2.0f, 0.0f,
         -3.0f, -1.0f, 0.0f,
-        -1.0f, -1.0f, 0.0f,
-        
+        -3.0f, -2.0f, 0.0f,
         -1.0f, -1.0f, 0.0f,
         -1.0f, -2.0f, 0.0f,
-        -3.0f, -2.0f, 0.0f,
 
         /*10th & 11th rectangles - 90deg mid-top walls*/
-        -3.0f, 0.0f, 0.0f,
-        -2.0f, 0.0f, 0.0f,
-        -3.0f, 3.0f, 0.0f,
-        
-        -3.0f, 3.0f, 0.0f,
         -2.0f, 3.0f, 0.0f,
         -2.0f, 0.0f, 0.0f,
+        -3.0f, 3.0f, 0.0f,
+        -3.0f, 0.0f, 0.0f,
+
+        //////
 
         -2.0f, 3.0f, 0.0f,
         -2.0f, 2.0f, 0.0f,
-        1.0f, 3.0f, 0.0f,
-        
         1.0f, 3.0f, 0.0f,
         1.0f, 2.0f, 0.0f,
-        -2.0f, 2.0f, 0.0f,
 
         /*12th to 15th rectangles - zig zag walls*/
-        -1.0f, 0.0f, 0.0f,
         -1.0f, 1.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
         
-        -1.0f, 1.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
+        /////
 
+        0.0f, 0.0f, 0.0f,
+        0.0f, -2.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
         1.0f, -2.0f, 0.0f,
-        0.0f, -2.0f, 0.0f,
-        
-        0.0f, -2.0f, 0.0f,
-        0.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
+
+        /////
 
         1.0f, -1.0f, 0.0f,
         1.0f, -2.0f, 0.0f,
         3.0f, -1.0f, 0.0f,
-        
-        3.0f, -1.0f, 0.0f,
         3.0f, -2.0f, 0.0f,
-        1.0f, -2.0f, 0.0f,
 
-        3.0f, -2.0f, 0.0f,
-        3.0f, -3.0f, 0.0f,
-        2.0f, -3.0f, 0.0f,
-        
-        3.0f, -2.0f, 0.0f,
+        /////
+
         2.0f, -2.0f, 0.0f,
         2.0f, -3.0f, 0.0f,
-
+        3.0f, -2.0f, 0.0f,
+        3.0f, -3.0f, 0.0f,
         /*16th rectangle - vertical top-right wall*/
-        2.0f, 0.0f, 0.0f,
-        3.0f, 0.0f, 0.0f,
-        3.0f, 3.0f, 0.0f,
-        
-        2.0f, 0.0f, 0.0f,
         2.0f, 3.0f, 0.0f,
+        2.0f, 0.0f, 0.0f,
         3.0f, 3.0f, 0.0f,
+        3.0f, 0.0f, 0.0f,
     };
 
-    // // buffer of moveable char
-    // static const GLfloat char_vertex_buffer_data[] = {
-    //     // moveable character
-    //     -4.75f, 2.5f, 0.0f,
-    //     -4.25f, 2.5f, 0.0f,
-    //     -4.75f, 2.0f, 0.0f,
+    unsigned int maze_indices[] = {
+        0, 1, 2,
+        1, 2, 3,
 
-    //     -4.75f, 2.0f, 0.0f,
-    //     -4.25f, 2.0f, 0.0f,
-    //     -4.25f, 2.5f, 0.0f,
-    // };
+        4, 5, 6,
+        5, 6, 7,
+
+        8, 9, 10,
+        9, 10, 11,
+
+        12, 13, 14,
+        13, 14, 15,
+
+        16, 17, 18,
+        17, 18, 19,
+
+        20, 21, 22,
+        21, 22, 23,
+
+        24, 25, 26,
+        25, 26, 27,
+
+        28, 29, 30,
+        29, 30, 31,
+
+        32, 33, 34,
+        33, 34, 35,
+
+        36, 37, 38,
+        37, 38, 39,
+
+        40, 41, 42,
+        41, 42, 43,
+
+        44, 45, 46,
+        45, 46, 47,
+
+        48, 49, 50,
+        49, 50, 51,
+
+        52, 53, 54,
+        53, 54, 55,
+
+        56, 57, 58,
+        57, 58, 59,
+
+        60, 61, 62,
+        61, 62, 63,
+    };
+
+    /*************/
 
     // buffer of moveable char
     static const GLfloat char_vertex_buffer_data[] = {
@@ -368,22 +365,26 @@ int main(void)
     };
 
     unsigned int char_indices[] = {
-        0, 1, 2, // 1st triangle
-        1, 2, 3, // 2nd triangle
+        0, 1, 2,
+        1, 2, 3,
     };
+
+    /*************/
 
     // generate the VAOs and VBOs
     GLuint mazevertexbuffer, charvertexbuffer, VAOs[2];
-    unsigned int EBO;
+    unsigned int EBOs[2];
 	glGenVertexArrays(2, VAOs);
 	glGenBuffers(1, &mazevertexbuffer);
 	glGenBuffers(1, &charvertexbuffer);
-    glGenBuffers(1, &EBO);
+    glGenBuffers(2, EBOs);
 
     // setup maze
     glBindVertexArray(VAOs[0]);
     glBindBuffer(GL_ARRAY_BUFFER, mazevertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(maze_vertex_buffer_data), maze_vertex_buffer_data, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOs[0]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(maze_indices), maze_indices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -391,13 +392,14 @@ int main(void)
     glBindVertexArray(VAOs[1]);
 	glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOs[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei perigramma polygwnwn
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei perigramma polygwnwn
 
+    // render loop
 	do {
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -408,61 +410,11 @@ int main(void)
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]); // for camera
 
         glBindVertexArray(VAOs[0]);
-        glDrawArrays(GL_TRIANGLES, 0, number_of_maze_vertices*3);
+        glDrawElements(GL_TRIANGLES, 96, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(VAOs[1]);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        // glBindVertexArray(0);
-
-        // // firstly draw the maze //
-		// glVertexAttribPointer(
-		// 	0,                  // attribute 0, must match the layout in the shader.
-		// 	3,                  // size
-		// 	GL_FLOAT,           // type
-		// 	GL_FALSE,           // normalized?
-		// 	0,                  // stride
-		// 	(void*)0          // array buffer offset
-		// );
-        // glEnableVertexAttribArray(0);
-		// // Draw the maze
-        // // glBindVertexArray(VAO0);
-        // glBindBuffer(GL_ARRAY_BUFFER, mazevertexbuffer);
-		// glDrawArrays(GL_TRIANGLES, 0, number_of_maze_vertices*3);
-		// glDisableVertexAttribArray(0);
-
-        // //////////////////////////////////////
-
-        // glVertexAttribPointer(
-		// 	0,                  // attribute 0, must match the layout in the shader.
-		// 	3,                  // size
-		// 	GL_FLOAT,           // type
-		// 	GL_FALSE,           // normalized?
-		// 	0,                  // stride
-		// 	(void*)0          // array buffer offset
-		// );
-        // glEnableVertexAttribArray(0);
-        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        // glDisableVertexAttribArray(0);
-        // // then create the moveable character //
-        // // glEnableVertexAttribArray(0);
-		// // glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
-		// // glVertexAttribPointer(
-		// // 	0,                  // attribute 0, must match the layout in the shader.
-		// // 	3,                  // size
-		// // 	GL_FLOAT,           // type
-		// // 	GL_FALSE,           // normalized?
-		// // 	0,                  // stride
-		// // 	(void*)0          // array buffer offset
-		// // );
-
-		// // // Draw the triangle !
-        // // glBindVertexArray(VAO1);
-		// // glDrawArrays(GL_TRIANGLES, 0, 6); // 2 triangles contained in a rect
-
-		// // glDisableVertexAttribArray(0);
-        
-        // // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -473,9 +425,9 @@ int main(void)
 	// Cleanup VBO
 	glDeleteBuffers(1, &mazevertexbuffer);
     glDeleteBuffers(1, &charvertexbuffer);
-	glDeleteVertexArrays(1, &VAOs[0]);
-    glDeleteVertexArrays(1, &VAOs[1]);
-    glDeleteBuffers(1, &EBO);
+	glDeleteVertexArrays(2, VAOs);
+    // glDeleteVertexArrays(1, &VAOs[1]);
+    glDeleteBuffers(2, EBOs);
 	glDeleteProgram(programID);
 
 	// Close OpenGL window and terminate GLFW
