@@ -17,6 +17,7 @@
 #include <fstream>
 #include <algorithm>
 #include <sstream>
+#include <chrono>
 
 // Include GLEW
 #include <GL/glew.h>
@@ -123,16 +124,24 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 	return ProgramID;
 }
 
-// void processInput(GLFWwindow *window, float &x, float &y) {
-//     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
-//         y += 0.01f;
-//     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-//         y -= 0.01f;
-//     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
-//         x -= 0.01f;
-//     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-//         x += 0.01f;
-// }
+void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data) {
+    float moveX, moveY = 0.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+        moveY = 0.001f;
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        moveY = -0.001f;
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        moveX = -0.001f;
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        moveX = 0.001f;
+
+    // sizeof(char_vertex_buffer_data)+3 because we have 12 elements
+    for (int i = 0; i < 12; i += 3) {
+        char_vertex_buffer_data[i] += moveX; // Update X coordinate
+        char_vertex_buffer_data[i + 1] += moveY; // Update Y coordinate
+    }
+}
 
 int main(void)
 {
@@ -350,7 +359,7 @@ int main(void)
     /*************/
 
     // vertex buffer of moveable char
-    static const GLfloat char_vertex_buffer_data[] = {
+    GLfloat char_vertex_buffer_data[] = {
         -4.75f, 2.5f, 0.0f,
         -4.75f, 2.0f, 0.0f,
         -4.25f, 2.5f, 0.0f,
@@ -384,9 +393,9 @@ int main(void)
     // setup moveable character
     glBindVertexArray(VAOs[1]);
 	glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOs[1]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -402,12 +411,16 @@ int main(void)
 
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]); // for camera
 
+        // draw maze
         glBindVertexArray(VAOs[0]);
         glDrawElements(GL_TRIANGLES, 96, GL_UNSIGNED_INT, 0);
 
+        // draw moveable character + deal with movement
         glBindVertexArray(VAOs[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
+        processInput(window, char_vertex_buffer_data);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
 
 		// Swap buffers
 		glfwSwapBuffers(window);
