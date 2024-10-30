@@ -129,16 +129,26 @@ struct Rectangle {
     float minX, maxX, minY, maxY;
 };
 
+// finished flag to close window when reaching the end!
+bool finishedFlag = false;
+
 // Function to check if two rectangles overlap
-bool checkAABBOverlap(Rectangle a, Rectangle b) {
-    return ((a.minX < b.maxX && a.maxY > b.minY));// || a.maxX > b.minX) &&
-            //(a.minY < b.maxY || a.maxY > b.minY));
+bool checkAABBOverlap(Rectangle border, Rectangle character) {
+    if(character.maxX >= 5.0f)
+        finishedFlag = true; 
+    return ((
+        (character.minX < -5.0f || character.maxX > 5.0f) ||
+        (character.minX < border.maxX &&
+        character.maxX > border.minX &&
+        character.minY < border.maxY &&
+        character.maxY > border.minY)
+    ));
 }
 
 // Function to create a rectangle from vertex data
 Rectangle createRectangle(GLfloat* vertices, int startIdx) {
     return {
-        vertices[startIdx], vertices[startIdx + 3], vertices[startIdx + 1], vertices[startIdx + 4]
+        vertices[startIdx], vertices[startIdx + 6], vertices[startIdx + 4], vertices[startIdx + 1]
     };
 };
 
@@ -163,35 +173,33 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
 
     // Create bounding box for the character
     Rectangle charRect = createRectangle(new_vertex_buffer_data, 0);
-    printf("x-right: %f\tx-left: %f\ty-up: %f\ty-down: %f", charRect.maxX, charRect.minX, charRect.maxY, charRect.minY);
 
     // Create bounding boxes for the maze walls
     std::vector<Rectangle> mazeWalls = {
         createRectangle(maze_vertex_buffer_data, 0),
-        // createRectangle(maze_vertex_buffer_data, 6),
-        // createRectangle(maze_vertex_buffer_data, 12),
-        // createRectangle(maze_vertex_buffer_data, 18),
-        // createRectangle(maze_vertex_buffer_data, 24),
-        // createRectangle(maze_vertex_buffer_data, 30),
-        // createRectangle(maze_vertex_buffer_data, 36),
-        // createRectangle(maze_vertex_buffer_data, 42),
-        // createRectangle(maze_vertex_buffer_data, 48),
-        // createRectangle(maze_vertex_buffer_data, 54),
-        // createRectangle(maze_vertex_buffer_data, 60),
-        // createRectangle(maze_vertex_buffer_data, 66),
-        // createRectangle(maze_vertex_buffer_data, 72),
-        // createRectangle(maze_vertex_buffer_data, 78),
-        // createRectangle(maze_vertex_buffer_data, 84),
-        // createRectangle(maze_vertex_buffer_data, 90),
-        // createRectangle(maze_vertex_buffer_data, 96)
+        createRectangle(maze_vertex_buffer_data, 12),
+        createRectangle(maze_vertex_buffer_data, 24),
+        createRectangle(maze_vertex_buffer_data, 36),
+        createRectangle(maze_vertex_buffer_data, 48),
+        createRectangle(maze_vertex_buffer_data, 60),
+        createRectangle(maze_vertex_buffer_data, 72),
+        createRectangle(maze_vertex_buffer_data, 84),
+        createRectangle(maze_vertex_buffer_data, 96),
+        createRectangle(maze_vertex_buffer_data, 108),
+        createRectangle(maze_vertex_buffer_data, 120),
+        createRectangle(maze_vertex_buffer_data, 132),
+        createRectangle(maze_vertex_buffer_data, 144),
+        createRectangle(maze_vertex_buffer_data, 156),
+        createRectangle(maze_vertex_buffer_data, 168),
+        createRectangle(maze_vertex_buffer_data, 180),
+        createRectangle(maze_vertex_buffer_data, 192)
     };
 
     // Check collision
     bool collision = false;
     for (const auto& wall : mazeWalls) {
-        if (checkAABBOverlap(charRect, wall)) {
+        if (checkAABBOverlap(wall, charRect)) {
             collision = true;
-            printf("here!\n");
             break;
         }
     }
@@ -329,10 +337,10 @@ int main(void)
         -1.0f, -2.0f, 0.0f,
 
         /*10th & 11th rectangles - 90deg mid-top walls*/
-        -2.0f, 3.0f, 0.0f,
-        -2.0f, 0.0f, 0.0f,
         -3.0f, 3.0f, 0.0f,
         -3.0f, 0.0f, 0.0f,
+        -2.0f, 3.0f, 0.0f,
+        -2.0f, 0.0f, 0.0f,
         //////
         -2.0f, 3.0f, 0.0f,
         -2.0f, 2.0f, 0.0f,
@@ -462,7 +470,7 @@ int main(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei perigramma polygwnwn
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei perigramma polygwnwn
 
     // render loop
 	do {
@@ -482,9 +490,6 @@ int main(void)
         glBindVertexArray(VAOs[1]);
         glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
         processInput(window, char_vertex_buffer_data, maze_vertex_buffer_data);
-        // if(checkCollision(char_vertex_buffer_data) == "NO_COL") {
-        //     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
-        // }
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -492,7 +497,7 @@ int main(void)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	} 
-	while (glfwGetKey(window, GLFW_KEY_Q) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+	while (!finishedFlag && glfwGetKey(window, GLFW_KEY_Q) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
 	// Cleanup VBO
 	glDeleteBuffers(1, &mazevertexbuffer);
