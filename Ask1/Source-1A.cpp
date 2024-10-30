@@ -124,8 +124,27 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 	return ProgramID;
 }
 
-void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data) {
+// struct to describe collision rectangles
+struct Rectangle {
+    float minX, maxX, minY, maxY;
+};
+
+// Function to check if two rectangles overlap
+bool checkAABBOverlap(Rectangle a, Rectangle b) {
+    return ((a.minX < b.maxX && a.maxY > b.minY));// || a.maxX > b.minX) &&
+            //(a.minY < b.maxY || a.maxY > b.minY));
+}
+
+// Function to create a rectangle from vertex data
+Rectangle createRectangle(GLfloat* vertices, int startIdx) {
+    return {
+        vertices[startIdx], vertices[startIdx + 3], vertices[startIdx + 1], vertices[startIdx + 4]
+    };
+};
+
+void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data) {
     float moveX, moveY = 0.0f;
+    GLfloat new_vertex_buffer_data[12];
 
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
         moveY = 0.001f;
@@ -136,10 +155,52 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data) {
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
         moveX = 0.001f;
 
-    // sizeof(char_vertex_buffer_data)+3 because we have 12 elements
+    // calculate new char pos and store them seperately
     for (int i = 0; i < 12; i += 3) {
-        char_vertex_buffer_data[i] += moveX; // Update X coordinate
-        char_vertex_buffer_data[i + 1] += moveY; // Update Y coordinate
+        new_vertex_buffer_data[i] = char_vertex_buffer_data[i] + moveX;
+        new_vertex_buffer_data[i + 1] = char_vertex_buffer_data[i + 1] + moveY;
+    }
+
+    // Create bounding box for the character
+    Rectangle charRect = createRectangle(new_vertex_buffer_data, 0);
+    printf("x-right: %f\tx-left: %f\ty-up: %f\ty-down: %f", charRect.maxX, charRect.minX, charRect.maxY, charRect.minY);
+
+    // Create bounding boxes for the maze walls
+    std::vector<Rectangle> mazeWalls = {
+        createRectangle(maze_vertex_buffer_data, 0),
+        // createRectangle(maze_vertex_buffer_data, 6),
+        // createRectangle(maze_vertex_buffer_data, 12),
+        // createRectangle(maze_vertex_buffer_data, 18),
+        // createRectangle(maze_vertex_buffer_data, 24),
+        // createRectangle(maze_vertex_buffer_data, 30),
+        // createRectangle(maze_vertex_buffer_data, 36),
+        // createRectangle(maze_vertex_buffer_data, 42),
+        // createRectangle(maze_vertex_buffer_data, 48),
+        // createRectangle(maze_vertex_buffer_data, 54),
+        // createRectangle(maze_vertex_buffer_data, 60),
+        // createRectangle(maze_vertex_buffer_data, 66),
+        // createRectangle(maze_vertex_buffer_data, 72),
+        // createRectangle(maze_vertex_buffer_data, 78),
+        // createRectangle(maze_vertex_buffer_data, 84),
+        // createRectangle(maze_vertex_buffer_data, 90),
+        // createRectangle(maze_vertex_buffer_data, 96)
+    };
+
+    // Check collision
+    bool collision = false;
+    for (const auto& wall : mazeWalls) {
+        if (checkAABBOverlap(charRect, wall)) {
+            collision = true;
+            printf("here!\n");
+            break;
+        }
+    }
+
+    // update pos if no collision
+    if (!collision) {
+        for (int i = 0; i < 12; i++) {
+            char_vertex_buffer_data[i] = new_vertex_buffer_data[i];
+        }
     }
 }
 
@@ -212,7 +273,7 @@ int main(void)
     // amount of vetrices(every triangle has 3)
     int number_of_maze_vertices = 96; // 32 triangles * 3 vertices
 
-    static const GLfloat maze_vertex_buffer_data[] = {
+    GLfloat maze_vertex_buffer_data[] = {
         /*1st rectangle - top-left border*/
         -5.0f, 5.0f, 0.0f,
         -5.0f, 3.0f, 0.0f,
@@ -360,10 +421,10 @@ int main(void)
 
     // vertex buffer of moveable char
     GLfloat char_vertex_buffer_data[] = {
-        -4.75f, 2.5f, 0.0f,
-        -4.75f, 2.0f, 0.0f,
-        -4.25f, 2.5f, 0.0f,
-        -4.25f, 2.0f, 0.0f,
+        -4.75f, 2.5f, 0.0f, // top-left
+        -4.75f, 2.0f, 0.0f, // bottom-left
+        -4.25f, 2.5f, 0.0f, // top-right
+        -4.25f, 2.0f, 0.0f, // bottom-right
     };
 
     unsigned int char_indices[] = {
@@ -401,7 +462,7 @@ int main(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei perigramma polygwnwn
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei perigramma polygwnwn
 
     // render loop
 	do {
@@ -420,7 +481,10 @@ int main(void)
         // draw moveable character + deal with movement
         glBindVertexArray(VAOs[1]);
         glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
-        processInput(window, char_vertex_buffer_data);
+        processInput(window, char_vertex_buffer_data, maze_vertex_buffer_data);
+        // if(checkCollision(char_vertex_buffer_data) == "NO_COL") {
+        //     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
+        // }
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -442,4 +506,3 @@ int main(void)
 
 	return 0;
 }
-
