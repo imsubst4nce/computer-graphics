@@ -126,13 +126,23 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 	return ProgramID;
 }
 
+/**********************************************************************************/
+/**********************************************************************************/
+
+// finished flag global var
+bool finishedFlag = false;
+
 // struct to describe collision rectangles
-struct Rectangle {
+struct Rectangle { 
     float minX, maxX, minY, maxY;
 };
 
-// finished flag to close window when reaching the end
-bool finishedFlag = false;
+// Function to create a rectangle from vertex data
+Rectangle createRectangle(GLfloat* vertices, int startIdx) {
+    return {
+        vertices[startIdx], vertices[startIdx + 6], vertices[startIdx + 4], vertices[startIdx + 1]
+    };
+};
 
 // check if we have reached the end of the maze
 // if yes set the flag to true so we can terminate the window
@@ -156,18 +166,11 @@ bool checkRectCollision(Rectangle border, Rectangle character) {
     ));
 }
 
-// Function to create a rectangle from vertex data
-Rectangle createRectangle(GLfloat* vertices, int startIdx) {
-    return {
-        vertices[startIdx], vertices[startIdx + 6], vertices[startIdx + 4], vertices[startIdx + 1]
-    };
-};
-
 // this function does all the movement
 // checking for key pressing and setting the next coordinates of the moveable character
 void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data) {
     float moveX, moveY = 0.0f;
-    GLfloat new_vertex_buffer_data[12];
+    GLfloat new_char_vertex_buffer_data[12];
 
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
         moveY = 0.001f;
@@ -180,12 +183,12 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
 
     // calculate new char pos and store them seperately
     for (int i = 0; i < 12; i += 3) {
-        new_vertex_buffer_data[i] = char_vertex_buffer_data[i] + moveX;
-        new_vertex_buffer_data[i + 1] = char_vertex_buffer_data[i + 1] + moveY;
+        new_char_vertex_buffer_data[i] = char_vertex_buffer_data[i] + moveX;
+        new_char_vertex_buffer_data[i + 1] = char_vertex_buffer_data[i + 1] + moveY;
     }
 
     // Create bounding box for the character
-    Rectangle charRect = createRectangle(new_vertex_buffer_data, 0);
+    Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
 
     // Create bounding boxes for the maze walls
     std::vector<Rectangle> mazeWalls = {
@@ -220,7 +223,7 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
     // update pos if no collision
     if (!collision) {
         for (int i = 0; i < 12; i++) {
-            char_vertex_buffer_data[i] = new_vertex_buffer_data[i];
+            char_vertex_buffer_data[i] = new_char_vertex_buffer_data[i];
         }
     }
 }
@@ -479,7 +482,7 @@ int main(void)
     // and since we move our character that means we need to make it dynamic
 	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOs[1]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
