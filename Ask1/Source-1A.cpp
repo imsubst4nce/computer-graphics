@@ -29,11 +29,13 @@ GLFWwindow* window;
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
 using namespace glm;
 using namespace std;
 
 /*************/
 // Οι LoadShaders είναι black box για σας
+/*************/
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
 
@@ -129,13 +131,22 @@ struct Rectangle {
     float minX, maxX, minY, maxY;
 };
 
-// finished flag to close window when reaching the end!
+// finished flag to close window when reaching the end
 bool finishedFlag = false;
 
-// Function to check if two rectangles overlap
-bool checkAABBOverlap(Rectangle border, Rectangle character) {
-    if(character.maxX >= 5.0f)
-        finishedFlag = true; 
+// check if we have reached the end of the maze
+// if yes set the flag to true so we can terminate the window
+bool checkIfReachedEnd(Rectangle character) {
+    if(character.maxX >= 5.0f) { // we have reached the end
+        finishedFlag = true;
+        return true;
+    }
+    return false;
+}
+
+// Function to check if two rectangles overlap/collide
+bool checkRectCollision(Rectangle border, Rectangle character) {
+    checkIfReachedEnd(character);
     return ((
         (character.minX < -5.0f || character.maxX > 5.0f) ||
         (character.minX < border.maxX &&
@@ -152,6 +163,8 @@ Rectangle createRectangle(GLfloat* vertices, int startIdx) {
     };
 };
 
+// this function does all the movement
+// checking for key pressing and setting the next coordinates of the moveable character
 void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data) {
     float moveX, moveY = 0.0f;
     GLfloat new_vertex_buffer_data[12];
@@ -198,7 +211,7 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
     // Check collision
     bool collision = false;
     for (const auto& wall : mazeWalls) {
-        if (checkAABBOverlap(wall, charRect)) {
+        if (checkRectCollision(wall, charRect)) {
             collision = true;
             break;
         }
@@ -251,7 +264,7 @@ int main(void)
 	// Ensure we can capture the Q key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-	// Grey background
+	// Black background(r=0,g=0,b=0,alpha=0)
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     
 	/*************/
@@ -443,8 +456,8 @@ int main(void)
     /*************/
 
     // generate the VAOs, VBOs EBOs
-    GLuint mazevertexbuffer, charvertexbuffer, VAOs[2];
-    unsigned int EBOs[2];
+    GLuint mazevertexbuffer, charvertexbuffer, VAOs[2]; // VAOs[0] for maze and VAOs[1] for character
+    unsigned int EBOs[2]; // EBOs[0] for maze and EBOs[1] for character
 	glGenVertexArrays(2, VAOs);
 	glGenBuffers(1, &mazevertexbuffer);
 	glGenBuffers(1, &charvertexbuffer);
@@ -470,7 +483,7 @@ int main(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei perigramma polygwnwn
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
 
     // render loop
 	do {

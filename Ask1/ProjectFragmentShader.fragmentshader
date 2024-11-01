@@ -5,8 +5,8 @@ out vec3 color;
 
 void main()
 {
-
-	// Output color = red 
-	color = vec3(0,0,1);
+    // for color to be blue
+    // r = 0, g = 0, b = 1
+	color = vec3(0 ,0, 1);
 
 }
