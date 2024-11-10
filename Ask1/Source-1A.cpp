@@ -228,6 +228,9 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
     }
 }
 
+/**********************************************************************************/
+/**********************************************************************************/
+
 int main(void)
 {
 	// Initialise GLFW

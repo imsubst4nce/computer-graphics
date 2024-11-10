@@ -30,9 +30,7 @@ GLFWwindow* window;
 using namespace glm;
 using namespace std;
 
-/// <summary>
-/// //////////////////////////////////////////////
-/// </summary>
+
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
 
@@ -44,16 +42,12 @@ glm::mat4 getProjectionMatrix() {
 	return ProjectionMatrix;
 }
 
-////////////////////////////////////////////// <summary>
 /// Add camera function here
-/// </summary>
-
 void camera_function()
 {
 	
 }
 
-/////////////////////////////////////////////////
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
 
@@ -122,8 +116,6 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 		printf("%s\n", &FragmentShaderErrorMessage[0]);
 	}
 
-
-
 	// Link the program
 	printf("Linking program\n");
 	GLuint ProgramID = glCreateProgram();
@@ -149,9 +141,179 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 
 	return ProgramID;
 }
-///////////////////////////////////////////////////
+
+/**********************************************************************************/
+/**********************************************************************************/
+
+// struct to describe collision rectangles
+struct Rectangle {
+    float minX, maxX, minY, maxY;
+};
+
+// Function to create a rectangle from vertex data
+Rectangle createRectangle(GLfloat* vertices, int startIdx) {
+    return {
+        vertices[startIdx], vertices[startIdx + 6], vertices[startIdx + 4], vertices[startIdx + 1]
+    };
+};
+
+// check if we have surpassed the end of the maze
+bool checkIfSurpassedEnd(Rectangle character) {
+    if(character.maxX >= 4.75f) {
+        // teleport to start code needs to be implemented here
+        return true;
+    }
+    return false;
+}
+
+// check if we have surpassed the start of the maze
+bool checkIfSurpassedStart(Rectangle character) {
+    if(character.minX <= -5.25f) {
+        return true;
+    }
+    return false;
+}
+
+// Function to check if two rectangles overlap/collide
+bool checkRectCollision(Rectangle border, Rectangle character) {
+    return ((
+        (character.minX <= -5.25f || character.maxX >= 4.75f) ||
+        (character.minX < border.maxX &&
+        character.maxX > border.minX &&
+        character.minY < border.maxY &&
+        character.maxY > border.minY)
+    ));
+}
+
+// this function does all the movement
+// checking for key pressing and setting the next coordinates of the moveable character
+void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data, GLuint charvertexbuffer) {
+    float moveX, moveY = 0.0f;
+    GLfloat new_char_vertex_buffer_data[24];
+
+    GLfloat char_starting_vertex_buffer_data[] = {
+        // Bottom face(laying on xy-plane as z=0.0f)
+        -4.75f, 2.5f, 0.0f,
+        -4.75f, 2.0f, 0.0f,
+        -4.25f, 2.5f, 0.0f,
+        -4.25f, 2.0f, 0.0f,
+
+        // Top face(z=1.0f)
+        -4.75f, 2.5f, 1.0f,
+        -4.75f, 2.0f, 1.0f,
+        -4.25f, 2.5f, 1.0f,
+        -4.25f, 2.0f, 1.0f,
+    };
+
+    GLfloat char_ending_vertex_buffer_data[] = {
+        // Bottom face(laying on xy-plane as z=0.0f)
+        4.75f, -2.0f, 0.0f,
+        4.75f, -2.5f, 0.0f,
+        4.25f, -2.0f, 0.0f,
+        4.25f, -2.5f, 0.0f,
+
+        // Top face(z=1.0f)
+        4.75f, -2.0f, 1.0f,
+        4.75f, -2.5f, 1.0f,
+        4.25f, -2.0f, 1.0f,
+        4.25f, -2.5f, 1.0f,
+    };
 
 
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+        moveY = 0.001f;
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        moveY = -0.001f;
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        moveX = -0.001f;
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        moveX = 0.001f;
+
+    // calculate new char pos and store them seperately
+    for (int i = 0; i < 24; i += 3) {
+        new_char_vertex_buffer_data[i] = char_vertex_buffer_data[i] + moveX;
+        new_char_vertex_buffer_data[i + 1] = char_vertex_buffer_data[i + 1] + moveY;
+    }
+
+    // Create bounding box for the character
+    Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
+
+    // Create bounding boxes for the maze walls
+    std::vector<Rectangle> mazeWalls = {
+        createRectangle(maze_vertex_buffer_data, 0),
+        createRectangle(maze_vertex_buffer_data, 12),
+        createRectangle(maze_vertex_buffer_data, 24),
+        createRectangle(maze_vertex_buffer_data, 36),
+        createRectangle(maze_vertex_buffer_data, 48),
+        createRectangle(maze_vertex_buffer_data, 60),
+        createRectangle(maze_vertex_buffer_data, 72),
+        createRectangle(maze_vertex_buffer_data, 84),
+        createRectangle(maze_vertex_buffer_data, 96),
+        createRectangle(maze_vertex_buffer_data, 108),
+        createRectangle(maze_vertex_buffer_data, 120),
+        createRectangle(maze_vertex_buffer_data, 132),
+        createRectangle(maze_vertex_buffer_data, 144),
+        createRectangle(maze_vertex_buffer_data, 156),
+        createRectangle(maze_vertex_buffer_data, 168),
+        createRectangle(maze_vertex_buffer_data, 180),
+        createRectangle(maze_vertex_buffer_data, 192),
+        // createRectangle(maze_vertex_buffer_data, 0),
+        // createRectangle(maze_vertex_buffer_data, 24),
+        // createRectangle(maze_vertex_buffer_data, 48),
+        // createRectangle(maze_vertex_buffer_data, 72),
+        // createRectangle(maze_vertex_buffer_data, 96),
+        // createRectangle(maze_vertex_buffer_data, 120),
+        // createRectangle(maze_vertex_buffer_data, 144),
+        // createRectangle(maze_vertex_buffer_data, 168),
+        // createRectangle(maze_vertex_buffer_data, 192),
+        // createRectangle(maze_vertex_buffer_data, 216),
+        // createRectangle(maze_vertex_buffer_data, 240),
+        // createRectangle(maze_vertex_buffer_data, 264),
+        // createRectangle(maze_vertex_buffer_data, 288),
+        // createRectangle(maze_vertex_buffer_data, 312),
+        // createRectangle(maze_vertex_buffer_data, 336),
+        // createRectangle(maze_vertex_buffer_data, 360),
+        // createRectangle(maze_vertex_buffer_data, 384),
+        // createRectangle(maze_vertex_buffer_data, 408),
+        // createRectangle(maze_vertex_buffer_data, 432),
+        // createRectangle(maze_vertex_buffer_data, 456),
+        // createRectangle(maze_vertex_buffer_data, 480),
+        // createRectangle(maze_vertex_buffer_data, 504),
+        // createRectangle(maze_vertex_buffer_data, 528),
+        // createRectangle(maze_vertex_buffer_data, 552),
+        // createRectangle(maze_vertex_buffer_data, 576),
+    };
+
+    // Check collision
+    bool collision = false;
+    for (const auto& wall : mazeWalls) {
+        if (checkRectCollision(wall, charRect)) {
+            collision = true;
+            break;
+        }
+    }
+
+    bool surpassedStart = checkIfSurpassedStart(charRect);
+    bool surpassedEnd = checkIfSurpassedEnd(charRect);
+
+    // update pos if no collision
+    if (!collision) {
+        for (int i = 0; i < 24; i++) {
+            char_vertex_buffer_data[i] = new_char_vertex_buffer_data[i];
+        }
+    } else if(surpassedStart) {
+	    for (int i = 0; i < 24; i++) {
+            char_vertex_buffer_data[i] = char_ending_vertex_buffer_data[i];
+        }
+    } else if(surpassedEnd) {
+        for (int i = 0; i < 24; i++) {
+            char_vertex_buffer_data[i] = char_starting_vertex_buffer_data[i];
+        }
+    }
+}
+
+/**********************************************************************************/
+/**********************************************************************************/
 
 int main(void)
 {
@@ -168,7 +330,7 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(800, 800, "Project 1B template", NULL, NULL);
+	window = glfwCreateWindow(950, 950, "Άσκηση 1Β - 2024", NULL, NULL);
 
 
 	if (window == NULL) {
@@ -192,11 +354,9 @@ int main(void)
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	// background color
-	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
 	glEnable(GL_DEPTH_TEST);
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
 
@@ -207,9 +367,9 @@ int main(void)
 	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
 	// Camera matrix
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(5.0f, 5.0f, 5.0f), // Camera in World Space
-		glm::vec3(0.0f, 0.0f, 0.0f), // and looks at the origin
-		glm::vec3(0.0f, 0.0f, 1.0f));  // Head is up 
+		glm::vec3(0.0f, 0.0f, 0.20f), // Camera in World Space
+		glm::vec3(0.0f, 0.0f, 0.25f), // and looks at the origin
+		glm::vec3(0.0f, 1.0f, 0.0f));  // Head is up 
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::mat4 Model = glm::mat4(1.0f);
 	// Our ModelViewProjection : multiplication of our 3 matrices
@@ -217,106 +377,606 @@ int main(void)
 	
     GLfloat len = 5.0f, wid=2.5f, heig=2.5f;
 
-	static const GLfloat cube[] =
-	{
-		-2.0f,-2.0f,-2.0f,
-		-2.0f,-2.0f, 2.0f,
-		-2.0f, 2.0f, 2.0f,
+    /*************/
 
-		 2.0f, 2.0f,-2.0f,
-		-2.0f,-2.0f,-2.0f,
-		-2.0f, 2.0f,-2.0f,
+    // amount of vetrices(every triangle has 3)
+    int number_of_maze_vertices = 576; // 192 triangles * 3 vertices
 
-		 2.0f,-2.0f, 2.0f,
-		-2.0f,-2.0f,-2.0f,
-		 2.0f,-2.0f,-2.0f,
+    GLfloat maze_vertex_buffer_data[] = {
+        /*1st rectangle - top-left border*/
+        // z = 0
+        -5.0f, 5.0f, 0.0f,
+        -5.0f, 3.0f, 0.0f,
+        -4.0f, 5.0f, 0.0f,
+        -4.0f, 3.0f, 0.0f,
+        // z = 1
+        -5.0f, 5.0f, 1.0f,
+        -5.0f, 3.0f, 1.0f,
+        -4.0f, 5.0f, 1.0f,
+        -4.0f, 3.0f, 1.0f,
+        
+        ////////////////////////
 
-		 2.0f, 2.0f,-2.0f,
-		 2.0f,-2.0f,-2.0f,
-		-2.0f,-2.0f,-2.0f,
+        /*2nd rectangle - bottom-left border*/
+        // z = 0
+        -5.0f, 1.5f, 0.0f,
+        -5.0f, -5.0f, 0.0f,
+        -4.0f, 1.5f, 0.0f,
+        -4.0f, -5.0f, 0.0f,
+        // z = 1
+        -5.0f, 1.5f, 1.0f,
+        -5.0f, -5.0f, 1.0f,
+        -4.0f, 1.5f, 1.0f,
+        -4.0f, -5.0f, 1.0f,
 
-		-2.0f,-2.0f,-2.0f,
-		-2.0f, 2.0f, 2.0f,
-		-2.0f, 2.0f,-2.0f,
+        ////////////////////////
 
-		 2.0f,-2.0f, 2.0f,
-		-2.0f,-2.0f, 2.0f,
-		-2.0f,-2.0f,-2.0f,
+        /*3nd rectangle - top border*/
+        // z = 0
+        -4.0f, 5.0f, 0.0f,
+        -4.0f, 4.0f, 0.0f,
+        4.0f, 5.0f, 0.0f,
+        4.0f, 4.0f, 0.0f,
+        // z = 1
+        -4.0f, 5.0f, 1.0f,
+        -4.0f, 4.0f, 1.0f,
+        4.0f, 5.0f, 1.0f,
+        4.0f, 4.0f, 1.0f,
 
-		-2.0f, 2.0f, 2.0f,
-		-2.0f,-2.0f, 2.0f,
-		 2.0f,-2.0f, 2.0f,
+        ////////////////////////
 
-		 2.0f, 2.0f, 2.0f,
-		 2.0f,-2.0f,-2.0f,
-		 2.0f, 2.0f,-2.0f,
+        /*4th rectangle - top-right border*/
+        // z = 0
+        4.0f, 5.0f, 0.0f,
+        4.0f, -1.5f, 0.0f,
+        5.0f, 5.0f, 0.0f,
+        5.0f, -1.5f, 0.0f,
+        // z = 1
+        4.0f, 5.0f, 1.0f,
+        4.0f, -1.5f, 1.0f,
+        5.0f, 5.0f, 1.0f,
+        5.0f, -1.5f, 1.0f,
 
-		 2.0f,-2.0f,-2.0f,
-		 2.0f, 2.0f, 2.0f,
-		 2.0f,-2.0f, 2.0f,
+        ////////////////////////
 
-		 2.0f, 2.0f, 2.0f,
-		 2.0f, 2.0f,-2.0f,
-		-2.0f, 2.0f,-2.0f,
+        /*5th rectangle - bottom-right border*/
+        // z = 0
+        4.0f, -3.0f, 0.0f,
+        4.0f, -5.0f, 0.0f,
+        5.0f, -3.0f, 0.0f,
+        5.0f, -5.0f, 0.0f,
+        // z = 1
+        4.0f, -3.0f, 1.0f,
+        4.0f, -5.0f, 1.0f,
+        5.0f, -3.0f, 1.0f,
+        5.0f, -5.0f, 1.0f,
 
-		 2.0f, 2.0f, 2.0f,
-		-2.0f, 2.0f,-2.0f,
-		-2.0f, 2.0f, 2.0f,
+        ////////////////////////
 
-		 2.0f, 2.0f, 2.0f,
-		-2.0f, 2.0f, 2.0f,
-		 2.0f,-2.0f, 2.0f
-	};
+        /*6th rectangle - bottom border*/
+        // z = 0
+        -4.0f, -4.0f, 0.0f,
+        -4.0f, -5.0f, 0.0f,
+        4.0f, -4.0f, 0.0f,
+        4.0f, -5.0f, 0.0f,
+        // z = 1
+        -4.0f, -4.0f, 1.0f,
+        -4.0f, -5.0f, 1.0f,
+        4.0f, -4.0f, 1.0f,
+        4.0f, -5.0f, 1.0f,
 
-	GLfloat a = 0.4f;
-	static const GLfloat color[] = {
-		0.583f,  0.771f,  0.014f, a,
-		0.609f,  0.115f,  0.436f, a,
-		0.327f,  0.483f,  0.844f, a,
-		0.822f,  0.569f,  0.201f, a,
-		0.435f,  0.602f,  0.223f, a,
-		0.310f,  0.747f,  0.185f, a,
-		0.597f,  0.770f,  0.761f, a,
-		0.559f,  0.436f,  0.730f, a,
-		0.359f,  0.583f,  0.152f, a,
-		0.483f,  0.596f,  0.789f, a,
-		0.559f,  0.861f,  0.639f, a,
-		0.195f,  0.548f,  0.859f, a,
-		0.014f,  0.184f,  0.576f, a,
-		0.771f,  0.328f,  0.970f, a,
-		0.406f,  0.615f,  0.116f, a,
-		0.676f,  0.977f,  0.133f, a,
-		0.971f,  0.572f,  0.833f, a,
-		0.140f,  0.616f,  0.489f, a,
-		0.997f,  0.513f,  0.064f, a,
-		0.945f,  0.719f,  0.592f, a,
-		0.543f,  0.021f,  0.978f, a,
-		0.279f,  0.317f,  0.505f, a,
-		0.167f,  0.620f,  0.077f, a,
-		0.347f,  0.857f,  0.137f, a,
-		0.055f,  0.953f,  0.042f, a,
-		0.714f,  0.505f,  0.345f, a,
-		0.783f,  0.290f,  0.734f, a,
-		0.722f,  0.645f,  0.174f, a,
-		0.302f,  0.455f,  0.848f, a,
-		0.225f,  0.587f,  0.040f, a,
-		0.517f,  0.713f,  0.338f, a,
-		0.053f,  0.959f,  0.120f, a,
-		0.393f,  0.621f,  0.362f, a,
-		0.673f,  0.211f,  0.457f, a,
-		0.820f,  0.883f,  0.371f, a,
-		0.982f,  0.099f,  0.879f, a,
-	}; 
+        ////////////////////////
 
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
-	
-	GLuint colorbuffer;
-	glGenBuffers(1, &colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(color), color, GL_STATIC_DRAW);
+        /*7th rectangle - bottom bump #1*/
+        // z = 0
+        -3.0f, -3.0f, 0.0f,
+        -3.0f, -4.0f, 0.0f,
+        -2.0f, -3.0f, 0.0f,
+        -2.0f, -4.0f, 0.0f,
+        // z = 1
+        -3.0f, -3.0f, 1.0f,
+        -3.0f, -4.0f, 1.0f,
+        -2.0f, -3.0f, 1.0f,
+        -2.0f, -4.0f, 1.0f,
+
+        ////////////////////////
+
+        /*8th rectangle - bottom bump #2*/
+        // z = 0
+        -1.0f, -3.0f, 0.0f,
+        -1.0f, -4.0f, 0.0f,
+        1.0f, -3.0f, 0.0f,
+        1.0f, -4.0f, 0.0f,
+        // z = 1
+        -1.0f, -3.0f, 1.0f,
+        -1.0f, -4.0f, 1.0f,
+        1.0f, -3.0f, 1.0f,
+        1.0f, -4.0f, 1.0f,
+
+        ////////////////////////
+
+        /*9th rectangle - horizontal mid-left wall*/
+        // z = 0
+        -3.0f, -1.0f, 0.0f,
+        -3.0f, -2.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f,
+        -1.0f, -2.0f, 0.0f,
+        // z = 1
+        -3.0f, -1.0f, 1.0f,
+        -3.0f, -2.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -2.0f, 1.0f,
+
+        ////////////////////////
+
+        /*10th & 11th rectangles - 90deg mid-top walls*/
+        // z = 0
+        -3.0f, 3.0f, 0.0f,
+        -3.0f, 0.0f, 0.0f,
+        -2.0f, 3.0f, 0.0f,
+        -2.0f, 0.0f, 0.0f,
+        // z = 1
+        -3.0f, 3.0f, 1.0f,
+        -3.0f, 0.0f, 1.0f,
+        -2.0f, 3.0f, 1.0f,
+        -2.0f, 0.0f, 1.0f,
+
+        //////
+
+        // z = 0
+        -2.0f, 3.0f, 0.0f,
+        -2.0f, 2.0f, 0.0f,
+        1.0f, 3.0f, 0.0f,
+        1.0f, 2.0f, 0.0f,
+        // z = 1
+        -2.0f, 3.0f, 1.0f,
+        -2.0f, 2.0f, 1.0f,
+        1.0f, 3.0f, 1.0f,
+        1.0f, 2.0f, 1.0f,
+
+        ////////////////////////
+
+
+        /*12th to 15th rectangles - zig zag walls*/
+        // z = 0
+        -1.0f, 1.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        // z = 1
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, 0.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        /////
+        // z = 0
+        0.0f, 0.0f, 0.0f,
+        0.0f, -2.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, -2.0f, 0.0f,
+        // z = 1
+        0.0f, 0.0f, 1.0f,
+        0.0f, -2.0f, 1.0f,
+        1.0f, 0.0f, 1.0f,
+        1.0f, -2.0f, 1.0f,
+        /////
+        // z = 0
+        1.0f, -1.0f, 0.0f,
+        1.0f, -2.0f, 0.0f,
+        3.0f, -1.0f, 0.0f,
+        3.0f, -2.0f, 0.0f,
+        // z = 1
+        1.0f, -1.0f, 1.0f,
+        1.0f, -2.0f, 1.0f,
+        3.0f, -1.0f, 1.0f,
+        3.0f, -2.0f, 1.0f,
+        /////
+        // z = 0
+        2.0f, -2.0f, 0.0f,
+        2.0f, -3.0f, 0.0f,
+        3.0f, -2.0f, 0.0f,
+        3.0f, -3.0f, 0.0f,
+        // z = 1
+        2.0f, -2.0f, 1.0f,
+        2.0f, -3.0f, 1.0f,
+        3.0f, -2.0f, 1.0f,
+        3.0f, -3.0f, 1.0f,
+
+        ////////////////////////
+
+        /*16th rectangle - vertical top-right wall*/
+        // z = 0
+        2.0f, 3.0f, 0.0f,
+        2.0f, 0.0f, 0.0f,
+        3.0f, 3.0f, 0.0f,
+        3.0f, 0.0f, 0.0f,
+        // z = 1
+        2.0f, 3.0f, 1.0f,
+        2.0f, 0.0f, 1.0f,
+        3.0f, 3.0f, 1.0f,
+        3.0f, 0.0f, 1.0f,
+    };
+
+    unsigned int maze_indices[] = {
+        // 1st rectangle - top-left border
+        0, 1, 2,        1, 2, 3,
+        4, 5, 6,        5, 6, 7,
+        0, 1, 4,        1, 4, 5,
+        2, 3, 6,        3, 6, 7,
+        0, 2, 4,        2, 4, 6,
+        1, 3, 5,        3, 5, 7,
+
+        // 2nd rectangle - bottom-left border
+        8, 9, 10,       9, 10, 11,
+        12, 13, 14,     13, 14, 15,
+        8, 9, 12,       9, 12, 13,
+        10, 11, 14,     11, 14, 15,
+        8, 10, 12,      10, 12, 14,
+        9, 11, 13,      11, 13, 15,
+
+        // 3rd rectangle - top border
+        16, 17, 18,     17, 18, 19,
+        20, 21, 22,     21, 22, 23,
+        16, 17, 20,     17, 20, 21,
+        18, 19, 22,     19, 22, 23,
+        16, 18, 20,     18, 20, 22,
+        17, 19, 21,     19, 21, 23,
+
+        // 4th rectangle - top-right border
+        24, 25, 26,     25, 26, 27,
+        28, 29, 30,     29, 30, 31,
+        24, 25, 28,     25, 28, 29,
+        26, 27, 30,     27, 30, 31,
+        24, 26, 28,     26, 28, 30,
+        25, 27, 29,     27, 29, 31,
+
+        // 5th rectangle - bottom-right border
+        32, 33, 34,     33, 34, 35,
+        36, 37, 38,     37, 38, 39,
+        32, 33, 36,     33, 36, 37,
+        34, 35, 38,     35, 38, 39,
+        32, 34, 36,     34, 36, 38,
+        33, 35, 37,     35, 37, 39,
+
+        // 6th rectangle - bottom border
+        40, 41, 42,     41, 42, 43,
+        44, 45, 46,     45, 46, 47,
+        40, 41, 44,     41, 44, 45,
+        42, 43, 46,     43, 46, 47,
+        40, 42, 44,     42, 44, 46,
+        41, 43, 45,     43, 45, 47,
+
+        // 7th rectangle - bottom bump #1
+        48, 49, 50,     49, 50, 51,
+        52, 53, 54,     53, 54, 55,
+        48, 49, 52,     49, 52, 53,
+        50, 51, 54,     51, 54, 55,
+        48, 50, 52,     50, 52, 54,
+        49, 51, 53,     51, 53, 55,
+
+        // 8th rectangle - bottom bump #2
+        56, 57, 58,     57, 58, 59,
+        60, 61, 62,     61, 62, 63,
+        56, 57, 60,     57, 60, 61,
+        58, 59, 62,     59, 62, 63,
+        56, 58, 60,     58, 60, 62,
+        57, 59, 61,     59, 61, 63,
+
+        // 9th rectangle - horizontal mid-left wall
+        64, 65, 66,     65, 66, 67,
+        68, 69, 70,     69, 70, 71,
+        64, 65, 68,     65, 68, 69,
+        66, 67, 70,     67, 70, 71,
+        64, 66, 68,     66, 68, 70,
+        65, 67, 69,     67, 69, 71,
+
+        // 10th rectangle - 90deg mid-top walls
+        72, 73, 74,     73, 74, 75,
+        76, 77, 78,     77, 78, 79,
+        72, 73, 76,     73, 76, 77,
+        74, 75, 78,     75, 78, 79,
+        72, 74, 76,     74, 76, 78,
+        73, 75, 77,     75, 77, 79,
+
+        // 11th rectangle - 90deg mid-top walls
+        80, 81, 82,     81, 82, 83,
+        84, 85, 86,     85, 86, 87,
+        80, 81, 84,     81, 84, 85,
+        82, 83, 86,     83, 86, 87,
+        80, 82, 84,     82, 84, 86,
+        81, 83, 85,     83, 85, 87,
+
+        // 12th rectangle - zig zag walls
+        88, 89, 90,     89, 90, 91,
+        92, 93, 94,     93, 94, 95,
+        88, 89, 92,     89, 92, 93,
+        90, 91, 94,     91, 94, 95,
+        88, 90, 92,     90, 92, 94,
+        89, 91, 93,     91, 93, 95,
+
+        // 13th rectangle - zig zag walls
+        96, 97, 98,     97, 98, 99,
+        100, 101, 102,  101, 102, 103,
+        96, 97, 100,    97, 100, 101,
+        98, 99, 102,    99, 102, 103,
+        96, 98, 100,    98, 100, 102,
+        97, 99, 101,    99, 101, 103,
+
+        // 14th rectangle - zig zag walls
+        104, 105, 106,  105, 106, 107,
+        108, 109, 110,  109, 110, 111,
+        104, 105, 108,  105, 108, 109,
+        106, 107, 110,  107, 110, 111,
+        104, 106, 108,  106, 108, 110,
+        105, 107, 109,  107, 109, 111,
+
+        // 15th rectangle - zig zag walls
+        112, 113, 114,  113, 114, 115,
+        116, 117, 118,  117, 118, 119,
+        112, 113, 116,  113, 116, 117,
+        114, 115, 118,  115, 118, 119,
+        112, 114, 116,  114, 116, 118,
+        113, 115, 117,  115, 117, 119,
+
+        // 16th rectangle - vertical top-right wall
+        120, 121, 122,  121, 122, 123,
+        124, 125, 126,  125, 126, 127,
+        120, 121, 124,  121, 124, 125,
+        122, 123, 126,  123, 126, 127,
+        120, 122, 124,  122, 124, 126,
+        121, 123, 125,  123, 125, 127,
+    };
+
+    /*************/
+
+    // vertex buffer of moveable char
+    GLfloat char_vertex_buffer_data[] = {
+        // Bottom face(laying on xy-plane as z=0.0f)
+        -4.75f, 2.5f, 0.0f,
+        -4.75f, 2.0f, 0.0f,
+        -4.25f, 2.5f, 0.0f,
+        -4.25f, 2.0f, 0.0f,
+
+        // Top face(z=1.0f)
+        -4.75f, 2.5f, 1.0f,
+        -4.75f, 2.0f, 1.0f,
+        -4.25f, 2.5f, 1.0f,
+        -4.25f, 2.0f, 1.0f,
+    };
+
+    unsigned int char_indices[] = {
+        // bottom face
+        0, 1, 2,
+        1, 2, 3,
+
+        // top face
+        4, 5, 6,
+        5, 6, 7,
+
+        // back face
+        1, 3, 5,
+        3, 5, 7,
+
+        // front face
+        0, 2, 4,
+        2, 4, 6,
+
+        // left face
+        0, 1, 4,
+        1, 4, 5,
+
+        // right face
+        2, 3, 6,
+        3, 6, 7,
+    };
+
+    GLfloat a = 0.8f;
+    static const GLfloat char_color[] = {
+        // Front face (Brighter Yellow)
+        0.5f,  0.5f,  0.0f, a,
+        0.6f,  0.6f,  0.0f, a,
+        0.4f,  0.4f,  0.0f, a,
+        0.3f,  0.3f,  0.0f, a,
+        
+        // Back face (Darker Yellow)
+        1.0f,  1.0f,  0.2f, a,
+        1.0f,  1.0f,  0.3f, a,
+        1.0f,  1.0f,  0.4f, a,
+        1.0f,  1.0f,  0.5f, a,
+    };
+
+    static const GLfloat maze_color[] = {
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+        0.0f, 0.0f, 1.0f, a,
+    };
+
+    // init vao, ebo, buffers
+    GLuint charvertexbuffer, charVAO, charcolorbuffer;
+    GLuint mazevertexbuffer, mazeVAO, mazecolorbuffer;
+    unsigned int mazeEBO, charEBO;
+
+    glGenVertexArrays(1, &charVAO);
+    glGenVertexArrays(1, &mazeVAO);
+    glGenBuffers(1, &charvertexbuffer);
+    glGenBuffers(1, &mazevertexbuffer);
+    glGenBuffers(1, &charcolorbuffer);
+    glGenBuffers(1, &mazecolorbuffer);
+    glGenBuffers(1, &charEBO);
+    glGenBuffers(1, &mazeEBO);
+    
+
+    // setup moveable character
+    glBindVertexArray(charVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
+    // GL_DYNAMIC_DRAW makes the buffer mutable, 
+    // and since we move our character that means we need to make it dynamic
+	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, charEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // setup char color 
+    glBindBuffer(GL_ARRAY_BUFFER, charcolorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(char_color), char_color, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1,
+        4,
+        GL_FLOAT,
+        GL_FALSE,
+        0,
+        (void*)0
+    );
+
+    // setup maze
+    glBindVertexArray(mazeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, mazevertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(maze_vertex_buffer_data), maze_vertex_buffer_data, GL_STATIC_DRAW); // GL_STATIC_DRAW makes buffer immutable
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mazeEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(maze_indices), maze_indices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // setup maze color 
+    glBindBuffer(GL_ARRAY_BUFFER, mazecolorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(maze_color), maze_color, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1,
+        4,
+        GL_FLOAT,
+        GL_FALSE,
+        0,
+        (void*)0
+    );
 
 	do {
 		// Clear the screen
@@ -328,9 +988,9 @@ int main(void)
 		glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
 		// Camera matrix
 		glm::mat4 View = glm::lookAt(
-			glm::vec3(5.0f, 5.0f, 5.0f), 
-			glm::vec3(0.0f, 0.0f, 0.0f), 
-			glm::vec3(0.0f, 0.0f, 1.0f) 
+			glm::vec3(0.0f, 0.0f, 20.0f), 
+			glm::vec3(0.0f, 0.0f, 0.25f),
+			glm::vec3(0.0f, 1.0f, 1.0f) 
 		);
 		
 		glm::mat4 Model = glm::mat4(1.0f);
@@ -339,46 +999,33 @@ int main(void)
 
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			0,                  
-			3,                 
-			GL_FLOAT,           
-			GL_FALSE,           
-			0,                  
-			(void*)0            
-		);
+        // draw maze
+        glBindVertexArray(mazeVAO);
+        glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
 
-		// 2nd attribute buffer : colors
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-		glVertexAttribPointer(
-			1,                                
-			4,                                // size
-			GL_FLOAT,                        
-			GL_FALSE,                         
-			0,                                
-			(void*)0                          
-		);
-
-		// Draw triangles 
-		glDrawArrays(GL_TRIANGLES, 0, 36); 
-		
-		glDisableVertexAttribArray(0);
+        // draw moveable character + deal with movement
+        glBindVertexArray(charVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
+        processInput(window, char_vertex_buffer_data, maze_vertex_buffer_data, charvertexbuffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-		glfwWindowShouldClose(window) == 0);
+	while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
 	// Cleanup VBO
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteVertexArrays(1, &VertexArrayID);
+    glDeleteVertexArrays(1, &charVAO);
+    glDeleteVertexArrays(1, &mazeVAO);
+	glDeleteBuffers(1, &charvertexbuffer);
+    glDeleteBuffers(1, &mazevertexbuffer);
+    glDeleteBuffers(1, &charEBO);
+    glDeleteBuffers(1, &mazeEBO);
+    glDeleteBuffers(1, &charcolorbuffer);
+    glDeleteBuffers(1, &mazecolorbuffer);
 	glDeleteProgram(programID);
 
 	// Close OpenGL window and terminate GLFW
@@ -386,4 +1033,3 @@ int main(void)
 
 	return 0;
 }
-
