@@ -42,12 +42,28 @@ glm::mat4 getProjectionMatrix() {
 	return ProjectionMatrix;
 }
 
-/// Add camera function here
-void camera_function()
-{
-	
-}
+void camera_function() {   
+    // move camera on x-axis
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        //
+    } else if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+        //
+    }
 
+    // move camera on y-axis
+    else if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        //
+    } else if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+        //
+    }
+    
+    // zoom in/out
+    else if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+        //
+    } else if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
+        //
+    }
+}
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
 
@@ -83,7 +99,6 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 	GLint Result = GL_FALSE;
 	int InfoLogLength;
 
-
 	// Compile Vertex Shader
 	printf("Compiling shader : %s\n", vertex_file_path);
 	char const* VertexSourcePointer = VertexShaderCode.c_str();
@@ -98,8 +113,6 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 		glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
 		printf("%s\n", &VertexShaderErrorMessage[0]);
 	}
-
-
 
 	// Compile Fragment Shader
 	printf("Compiling shader : %s\n", fragment_file_path);
@@ -219,7 +232,6 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         4.25f, -2.5f, 1.0f,
     };
 
-
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
         moveY = 0.001f;
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
@@ -241,47 +253,22 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
     // Create bounding boxes for the maze walls
     std::vector<Rectangle> mazeWalls = {
         createRectangle(maze_vertex_buffer_data, 0),
-        createRectangle(maze_vertex_buffer_data, 12),
         createRectangle(maze_vertex_buffer_data, 24),
-        createRectangle(maze_vertex_buffer_data, 36),
         createRectangle(maze_vertex_buffer_data, 48),
-        createRectangle(maze_vertex_buffer_data, 60),
         createRectangle(maze_vertex_buffer_data, 72),
-        createRectangle(maze_vertex_buffer_data, 84),
         createRectangle(maze_vertex_buffer_data, 96),
-        createRectangle(maze_vertex_buffer_data, 108),
         createRectangle(maze_vertex_buffer_data, 120),
-        createRectangle(maze_vertex_buffer_data, 132),
         createRectangle(maze_vertex_buffer_data, 144),
-        createRectangle(maze_vertex_buffer_data, 156),
         createRectangle(maze_vertex_buffer_data, 168),
-        createRectangle(maze_vertex_buffer_data, 180),
         createRectangle(maze_vertex_buffer_data, 192),
-        // createRectangle(maze_vertex_buffer_data, 0),
-        // createRectangle(maze_vertex_buffer_data, 24),
-        // createRectangle(maze_vertex_buffer_data, 48),
-        // createRectangle(maze_vertex_buffer_data, 72),
-        // createRectangle(maze_vertex_buffer_data, 96),
-        // createRectangle(maze_vertex_buffer_data, 120),
-        // createRectangle(maze_vertex_buffer_data, 144),
-        // createRectangle(maze_vertex_buffer_data, 168),
-        // createRectangle(maze_vertex_buffer_data, 192),
-        // createRectangle(maze_vertex_buffer_data, 216),
-        // createRectangle(maze_vertex_buffer_data, 240),
-        // createRectangle(maze_vertex_buffer_data, 264),
-        // createRectangle(maze_vertex_buffer_data, 288),
-        // createRectangle(maze_vertex_buffer_data, 312),
-        // createRectangle(maze_vertex_buffer_data, 336),
-        // createRectangle(maze_vertex_buffer_data, 360),
-        // createRectangle(maze_vertex_buffer_data, 384),
-        // createRectangle(maze_vertex_buffer_data, 408),
-        // createRectangle(maze_vertex_buffer_data, 432),
-        // createRectangle(maze_vertex_buffer_data, 456),
-        // createRectangle(maze_vertex_buffer_data, 480),
-        // createRectangle(maze_vertex_buffer_data, 504),
-        // createRectangle(maze_vertex_buffer_data, 528),
-        // createRectangle(maze_vertex_buffer_data, 552),
-        // createRectangle(maze_vertex_buffer_data, 576),
+        createRectangle(maze_vertex_buffer_data, 216),
+        createRectangle(maze_vertex_buffer_data, 240),
+        createRectangle(maze_vertex_buffer_data, 264),
+        createRectangle(maze_vertex_buffer_data, 288),
+        createRectangle(maze_vertex_buffer_data, 312),
+        createRectangle(maze_vertex_buffer_data, 336),
+        createRectangle(maze_vertex_buffer_data, 360),
+        createRectangle(maze_vertex_buffer_data, 384),
     };
 
     // Check collision
@@ -364,7 +351,7 @@ int main(void)
 
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
+	glm::mat4 Projection = glm::perspective(glm::radians(30.0f), 4.0f / 4.0f, 0.1f, 100.0f);
 	// Camera matrix
 	glm::mat4 View = glm::lookAt(
 		glm::vec3(0.0f, 0.0f, 0.20f), // Camera in World Space
@@ -382,6 +369,7 @@ int main(void)
     // amount of vetrices(every triangle has 3)
     int number_of_maze_vertices = 576; // 192 triangles * 3 vertices
 
+    // vertex data of maze
     GLfloat maze_vertex_buffer_data[] = {
         /*1st rectangle - top-left border*/
         // z = 0
@@ -729,7 +717,7 @@ int main(void)
 
     /*************/
 
-    // vertex buffer of moveable char
+    // vertex data of char
     GLfloat char_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
         -4.75f, 2.5f, 0.0f,
@@ -770,147 +758,178 @@ int main(void)
         3, 6, 7,
     };
 
+    // color data
     GLfloat a = 0.8f;
     static const GLfloat char_color[] = {
-        // Front face (Brighter Yellow)
-        0.5f,  0.5f,  0.0f, a,
-        0.6f,  0.6f,  0.0f, a,
-        0.4f,  0.4f,  0.0f, a,
-        0.3f,  0.3f,  0.0f, a,
+        // Top face (Bright)
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
         
-        // Back face (Darker Yellow)
-        1.0f,  1.0f,  0.2f, a,
-        1.0f,  1.0f,  0.3f, a,
-        1.0f,  1.0f,  0.4f, a,
-        1.0f,  1.0f,  0.5f, a,
+        // Bottom face (Dark)
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
     };
 
     static const GLfloat maze_color[] = {
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
-        0.0f, 0.0f, 1.0f, a,
+
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+        0.0f, 0.0f, 0.7f, a,
+
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
@@ -947,14 +966,7 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, charcolorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(char_color), char_color, GL_STATIC_DRAW);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(
-        1,
-        4,
-        GL_FLOAT,
-        GL_FALSE,
-        0,
-        (void*)0
-    );
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     // setup maze
     glBindVertexArray(mazeVAO);
@@ -969,14 +981,7 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, mazecolorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(maze_color), maze_color, GL_STATIC_DRAW);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(
-        1,
-        4,
-        GL_FLOAT,
-        GL_FALSE,
-        0,
-        (void*)0
-    );
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	do {
 		// Clear the screen
@@ -999,6 +1004,8 @@ int main(void)
 
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
+        camera_function();
+
         // draw maze
         glBindVertexArray(mazeVAO);
         glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
@@ -1017,7 +1024,7 @@ int main(void)
 	} // Check if the ESC key was pressed or the window was closed
 	while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
-	// Cleanup VBO
+	// Cleanup
     glDeleteVertexArrays(1, &charVAO);
     glDeleteVertexArrays(1, &mazeVAO);
 	glDeleteBuffers(1, &charvertexbuffer);
