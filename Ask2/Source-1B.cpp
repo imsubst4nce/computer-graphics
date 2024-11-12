@@ -34,7 +34,6 @@ using namespace std;
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
 
-
 glm::mat4 getViewMatrix() {
 	return ViewMatrix;
 }
@@ -45,23 +44,23 @@ glm::mat4 getProjectionMatrix() {
 void camera_function() {   
     // move camera on x-axis
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        //
+        // cam_x += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-        //
+        // cam_x -= 0.01f;
     }
 
     // move camera on y-axis
     else if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        //
+        // cam_y += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        //
+        // cam_y -= 0.01f;
     }
     
     // zoom in/out
     else if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-        //
+        // zoom += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
-        //
+        // zoom -= 0.01f;
     }
 }
 
@@ -259,16 +258,15 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         createRectangle(maze_vertex_buffer_data, 96),
         createRectangle(maze_vertex_buffer_data, 120),
         createRectangle(maze_vertex_buffer_data, 144),
-        createRectangle(maze_vertex_buffer_data, 168),
-        createRectangle(maze_vertex_buffer_data, 192),
-        createRectangle(maze_vertex_buffer_data, 216),
-        createRectangle(maze_vertex_buffer_data, 240),
-        createRectangle(maze_vertex_buffer_data, 264),
-        createRectangle(maze_vertex_buffer_data, 288),
-        createRectangle(maze_vertex_buffer_data, 312),
-        createRectangle(maze_vertex_buffer_data, 336),
-        createRectangle(maze_vertex_buffer_data, 360),
-        createRectangle(maze_vertex_buffer_data, 384),
+        createRectangle(maze_vertex_buffer_data, 180),
+        createRectangle(maze_vertex_buffer_data, 204),
+        createRectangle(maze_vertex_buffer_data, 228),
+        createRectangle(maze_vertex_buffer_data, 252),
+        createRectangle(maze_vertex_buffer_data, 276),
+        createRectangle(maze_vertex_buffer_data, 300),
+        createRectangle(maze_vertex_buffer_data, 324),
+        createRectangle(maze_vertex_buffer_data, 348),
+        createRectangle(maze_vertex_buffer_data, 372), // need to fix this
     };
 
     // Check collision
@@ -329,7 +327,7 @@ int main(void)
 	glfwMakeContextCurrent(window);
 
 	// Initialize GLEW
-	glewExperimental = true; 
+    glewExperimental = true;
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
 		getchar();
@@ -346,7 +344,6 @@ int main(void)
 	glEnable(GL_DEPTH_TEST);
 
 	// Create and compile our GLSL program from the shaders
-
 	GLuint programID = LoadShaders("P1BVertexShader.vertexshader", "P1BFragmentShader.fragmentshader");
 
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
@@ -359,9 +356,7 @@ int main(void)
 		glm::vec3(0.0f, 1.0f, 0.0f));  // Head is up 
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::mat4 Model = glm::mat4(1.0f);
-	// Our ModelViewProjection : multiplication of our 3 matrices
-	glm::mat4 MVP = Projection * View * Model; 
-	
+	glm::mat4 MVP = Projection * View * Model;
     GLfloat len = 5.0f, wid=2.5f, heig=2.5f;
 
     /*************/
@@ -982,6 +977,8 @@ int main(void)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(maze_color), maze_color, GL_STATIC_DRAW);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
 
 	do {
 		// Clear the screen
