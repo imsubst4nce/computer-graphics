@@ -201,34 +201,34 @@ bool checkRectCollision(Rectangle border, Rectangle character) {
 // checking for key pressing and setting the next coordinates of the moveable character
 void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data, GLuint charvertexbuffer) {
     float moveX, moveY = 0.0f;
-    GLfloat new_char_vertex_buffer_data[24];
+    GLfloat new_char_vertex_buffer_data[12];
 
     GLfloat char_starting_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
-        -4.75f, 2.5f, 0.0f,
-        -4.75f, 2.0f, 0.0f,
-        -4.25f, 2.5f, 0.0f,
-        -4.25f, 2.0f, 0.0f,
+        -4.75f, 2.5f, 0.25f,
+        -4.75f, 2.0f, 0.25f,
+        -4.25f, 2.5f, 0.25f,
+        -4.25f, 2.0f, 0.25f,
 
         // Top face(z=1.0f)
-        -4.75f, 2.5f, 1.0f,
-        -4.75f, 2.0f, 1.0f,
-        -4.25f, 2.5f, 1.0f,
-        -4.25f, 2.0f, 1.0f,
+        -4.75f, 2.5f, 0.75f,
+        -4.75f, 2.0f, 0.75f,
+        -4.25f, 2.5f, 0.75f,
+        -4.25f, 2.0f, 0.75f,
     };
 
     GLfloat char_ending_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
-        4.75f, -2.0f, 0.0f,
-        4.75f, -2.5f, 0.0f,
-        4.25f, -2.0f, 0.0f,
-        4.25f, -2.5f, 0.0f,
+        4.75f, -2.0f, 0.25f,
+        4.75f, -2.5f, 0.25f,
+        4.25f, -2.0f, 0.25f,
+        4.25f, -2.5f, 0.25f,
 
         // Top face(z=1.0f)
-        4.75f, -2.0f, 1.0f,
-        4.75f, -2.5f, 1.0f,
-        4.25f, -2.0f, 1.0f,
-        4.25f, -2.5f, 1.0f,
+        4.75f, -2.0f, 0.75f,
+        4.75f, -2.5f, 0.75f,
+        4.25f, -2.0f, 0.75f,
+        4.25f, -2.5f, 0.75f,
     };
 
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
@@ -241,7 +241,7 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         moveX = 0.001f;
 
     // calculate new char pos and store them seperately
-    for (int i = 0; i < 24; i += 3) {
+    for (int i = 0; i < 12; i += 3) {
         new_char_vertex_buffer_data[i] = char_vertex_buffer_data[i] + moveX;
         new_char_vertex_buffer_data[i + 1] = char_vertex_buffer_data[i + 1] + moveY;
     }
@@ -286,15 +286,15 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
 
     // update pos if no collision
     if (!collision) {
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 12; i++) {
             char_vertex_buffer_data[i] = new_char_vertex_buffer_data[i];
         }
     } else if(surpassedStart) {
-	    for (int i = 0; i < 24; i++) {
+	    for (int i = 0; i < 12; i++) {
             char_vertex_buffer_data[i] = char_ending_vertex_buffer_data[i];
         }
     } else if(surpassedEnd) {
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 12; i++) {
             char_vertex_buffer_data[i] = char_starting_vertex_buffer_data[i];
         }
     }
@@ -353,7 +353,7 @@ int main(void)
     glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
     // Camera matrix
     glm::mat4 View = glm::lookAt(
-        glm::vec3(0.0f, -15.0f, 20.0f), 
+        glm::vec3(0.0f, -10.0f, 20.0f), 
         glm::vec3(0.0f, 0.0f, 0.25f),
         glm::vec3(0.0f, 1.0f, 0.0f) 
     );
@@ -718,16 +718,16 @@ int main(void)
     // vertex data of char
     GLfloat char_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
-        -4.75f, 2.5f, 0.0f,
-        -4.75f, 2.0f, 0.0f,
-        -4.25f, 2.5f, 0.0f,
-        -4.25f, 2.0f, 0.0f,
+        -4.75f, 2.5f, 0.25f,
+        -4.75f, 2.0f, 0.25f,
+        -4.25f, 2.5f, 0.25f,
+        -4.25f, 2.0f, 0.25f,
 
         // Top face(z=1.0f)
-        -4.75f, 2.5f, 1.0f,
-        -4.75f, 2.0f, 1.0f,
-        -4.25f, 2.5f, 1.0f,
-        -4.25f, 2.0f, 1.0f,
+        -4.75f, 2.5f, 0.75f,
+        -4.75f, 2.0f, 0.75f,
+        -4.25f, 2.5f, 0.75f,
+        -4.25f, 2.0f, 0.75f,
     };
 
     unsigned int char_indices[] = {
@@ -760,16 +760,16 @@ int main(void)
     GLfloat a = 0.8f;
     static const GLfloat char_color[] = {
         // Top face (Bright)
-        0.85f, 0.75f, 0.0f, a,
-        0.85f, 0.75f, 0.0f, a,
-        0.85f, 0.75f, 0.0f, a,
-        0.85f, 0.75f, 0.0f, a,
-        
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
+
         // Bottom face (Dark)
-        0.6f, 0.5f, 0.0f, a,
-        0.6f, 0.5f, 0.0f, a,
-        0.6f, 0.5f, 0.0f, a,
-        0.6f, 0.5f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
     };
 
     static const GLfloat maze_color[] = {
