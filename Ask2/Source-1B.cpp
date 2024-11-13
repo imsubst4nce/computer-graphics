@@ -40,27 +40,30 @@ glm::mat4 getViewMatrix() {
 glm::mat4 getProjectionMatrix() {
 	return ProjectionMatrix;
 }
+float cam_x = 0.0f;
+float cam_y = 0.0f;
+float cam_z = 20.0f;
 
 void camera_function() {   
     // move camera on x-axis
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        // cam_x += 0.01f;
+        cam_x += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-        // cam_x -= 0.01f;
+        cam_x -= 0.01f;
     }
 
     // move camera on y-axis
     else if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        // cam_y += 0.01f;
+        cam_y += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        // cam_y -= 0.01f;
+        cam_y -= 0.01f;
     }
     
     // zoom in/out
     else if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-        // zoom += 0.01f;
+        cam_z += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
-        // zoom -= 0.01f;
+        cam_z -= 0.01f;
     }
 }
 
@@ -199,10 +202,21 @@ bool checkRectCollision(Rectangle border, Rectangle character) {
 
 // this function does all the movement
 // checking for key pressing and setting the next coordinates of the moveable character
-void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data, GLuint charvertexbuffer) {
+void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data, GLuint charvertexbuffer,std::vector<Rectangle> mazeWalls) {
     float moveX, moveY = 0.0f;
-    GLfloat new_char_vertex_buffer_data[12];
+    GLfloat new_char_vertex_buffer_data[] = {
+        // Bottom face(laying on xy-plane as z=0.0f)
+        0.0f, 0.0f, 0.25f,
+        0.0f, 0.0f, 0.25f,
+        0.0f, 0.0f, 0.25f,
+        0.0f, 0.0f, 0.25f,
 
+        // Top face(z=1.0f)
+        0.0f, 0.0f, 0.75f,
+        0.0f, 0.0f, 0.75f,
+        0.0f, 0.0f, 0.75f,
+        0.0f, 0.0f, 0.75f,
+    };
     GLfloat char_starting_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
         -4.75f, 2.5f, 0.25f,
@@ -216,7 +230,6 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         -4.25f, 2.5f, 0.75f,
         -4.25f, 2.0f, 0.75f,
     };
-
     GLfloat char_ending_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
         4.75f, -2.0f, 0.25f,
@@ -241,36 +254,13 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         moveX = 0.001f;
 
     // calculate new char pos and store them seperately
-    for (int i = 0; i < 12; i += 3) {
+    for (int i = 0; i < 24; i += 3) {
         new_char_vertex_buffer_data[i] = char_vertex_buffer_data[i] + moveX;
         new_char_vertex_buffer_data[i + 1] = char_vertex_buffer_data[i + 1] + moveY;
     }
 
     // Create bounding box for the character
     Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
-    
-    // for debug
-    // printf("charRect: %f\t%f\t%f\t%f\n",charRect.minX, charRect.maxX, charRect.minY, charRect.maxY);
-
-    // Create bounding boxes for the maze walls
-    std::vector<Rectangle> mazeWalls = {
-        createRectangle(maze_vertex_buffer_data, 0),
-        createRectangle(maze_vertex_buffer_data, 24),
-        createRectangle(maze_vertex_buffer_data, 48),
-        createRectangle(maze_vertex_buffer_data, 72),
-        createRectangle(maze_vertex_buffer_data, 96),
-        createRectangle(maze_vertex_buffer_data, 120),
-        createRectangle(maze_vertex_buffer_data, 144),
-        createRectangle(maze_vertex_buffer_data, 180),
-        createRectangle(maze_vertex_buffer_data, 204),
-        createRectangle(maze_vertex_buffer_data, 228),
-        createRectangle(maze_vertex_buffer_data, 252),
-        createRectangle(maze_vertex_buffer_data, 276),
-        createRectangle(maze_vertex_buffer_data, 300),
-        createRectangle(maze_vertex_buffer_data, 324),
-        createRectangle(maze_vertex_buffer_data, 348),
-        createRectangle(maze_vertex_buffer_data, 372), // need to fix this
-    };
 
     // Check collision
     bool collision = false;
@@ -286,16 +276,36 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
 
     // update pos if no collision
     if (!collision) {
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 24; i++) {
             char_vertex_buffer_data[i] = new_char_vertex_buffer_data[i];
         }
     } else if(surpassedStart) {
-	    for (int i = 0; i < 12; i++) {
+	    for (int i = 0; i < 24; i++) {
             char_vertex_buffer_data[i] = char_ending_vertex_buffer_data[i];
         }
+        // create the bounding box of the character again
+        Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
+        // Check collision again
+        bool collision = false;
+        for (const auto& wall : mazeWalls) {
+            if (checkRectCollision(wall, charRect)) {
+                collision = true;
+                break;
+            }
+        }
     } else if(surpassedEnd) {
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 24; i++) {
             char_vertex_buffer_data[i] = char_starting_vertex_buffer_data[i];
+        }
+        // create the bounding box of the character again
+        Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
+        // Check collision again
+        bool collision = false;
+        for (const auto& wall : mazeWalls) {
+            if (checkRectCollision(wall, charRect)) {
+                collision = true;
+                break;
+            }
         }
     }
 }
@@ -349,16 +359,6 @@ int main(void)
 	GLuint programID = LoadShaders("P1BVertexShader.vertexshader", "P1BFragmentShader.fragmentshader");
 
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-
-    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
-    // Camera matrix
-    glm::mat4 View = glm::lookAt(
-        glm::vec3(0.0f, -10.0f, 20.0f), 
-        glm::vec3(0.0f, 0.0f, 0.25f),
-        glm::vec3(0.0f, 1.0f, 0.0f) 
-    );
-    glm::mat4 Model = glm::mat4(1.0f);
-    glm::mat4 MVP = Projection * View * Model;
 
     GLfloat len = 5.0f, wid=2.5f, heig=2.5f;
 
@@ -981,6 +981,26 @@ int main(void)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+    // Create bounding boxes for the maze walls
+    std::vector<Rectangle> mazeWalls = {
+        createRectangle(maze_vertex_buffer_data, 0),
+        createRectangle(maze_vertex_buffer_data, 24),
+        createRectangle(maze_vertex_buffer_data, 48),
+        createRectangle(maze_vertex_buffer_data, 72),
+        createRectangle(maze_vertex_buffer_data, 96),
+        createRectangle(maze_vertex_buffer_data, 120),
+        createRectangle(maze_vertex_buffer_data, 144),
+        createRectangle(maze_vertex_buffer_data, 180),
+        createRectangle(maze_vertex_buffer_data, 204),
+        createRectangle(maze_vertex_buffer_data, 228),
+        createRectangle(maze_vertex_buffer_data, 252),
+        createRectangle(maze_vertex_buffer_data, 276),
+        createRectangle(maze_vertex_buffer_data, 300),
+        createRectangle(maze_vertex_buffer_data, 324),
+        createRectangle(maze_vertex_buffer_data, 348),
+        createRectangle(maze_vertex_buffer_data, 372), // need to fix this
+    };
+
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
 
 	do {
@@ -989,6 +1009,16 @@ int main(void)
 	
 		// Use our shader
 		glUseProgram(programID);
+        
+         glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
+        // Camera matrix
+        glm::mat4 View = glm::lookAt(
+            glm::vec3(cam_x, cam_y, cam_z), 
+            glm::vec3(0.0f, 0.0f, 0.25f),
+            glm::vec3(0.0f, 1.0f, 0.0f) 
+        );
+        glm::mat4 Model = glm::mat4(1.0f);
+        glm::mat4 MVP = Projection * View * Model;
 
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
@@ -1001,7 +1031,7 @@ int main(void)
         // draw moveable character + deal with movement
         glBindVertexArray(charVAO);
         glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
-        processInput(window, char_vertex_buffer_data, maze_vertex_buffer_data, charvertexbuffer);
+        processInput(window, char_vertex_buffer_data, maze_vertex_buffer_data, charvertexbuffer, mazeWalls);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
