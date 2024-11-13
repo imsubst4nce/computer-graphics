@@ -248,6 +248,9 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
 
     // Create bounding box for the character
     Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
+    
+    // for debug
+    // printf("charRect: %f\t%f\t%f\t%f\n",charRect.minX, charRect.maxX, charRect.minY, charRect.maxY);
 
     // Create bounding boxes for the maze walls
     std::vector<Rectangle> mazeWalls = {
@@ -317,7 +320,6 @@ int main(void)
 
 	window = glfwCreateWindow(950, 950, "Άσκηση 1Β - 2024", NULL, NULL);
 
-
 	if (window == NULL) {
 		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
 		getchar();
@@ -348,15 +350,16 @@ int main(void)
 
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-	glm::mat4 Projection = glm::perspective(glm::radians(30.0f), 4.0f / 4.0f, 0.1f, 100.0f);
-	// Camera matrix
-	glm::mat4 View = glm::lookAt(
-		glm::vec3(0.0f, 0.0f, 0.20f), // Camera in World Space
-		glm::vec3(0.0f, 0.0f, 0.25f), // and looks at the origin
-		glm::vec3(0.0f, 1.0f, 0.0f));  // Head is up 
-	// Model matrix : an identity matrix (model will be at the origin)
-	glm::mat4 Model = glm::mat4(1.0f);
-	glm::mat4 MVP = Projection * View * Model;
+    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
+    // Camera matrix
+    glm::mat4 View = glm::lookAt(
+        glm::vec3(0.0f, -15.0f, 20.0f), 
+        glm::vec3(0.0f, 0.0f, 0.25f),
+        glm::vec3(0.0f, 1.0f, 0.0f) 
+    );
+    glm::mat4 Model = glm::mat4(1.0f);
+    glm::mat4 MVP = Projection * View * Model;
+
     GLfloat len = 5.0f, wid=2.5f, heig=2.5f;
 
     /*************/
@@ -978,7 +981,7 @@ int main(void)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
 
 	do {
 		// Clear the screen
@@ -986,18 +989,6 @@ int main(void)
 	
 		// Use our shader
 		glUseProgram(programID);
-
-		glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
-		// Camera matrix
-		glm::mat4 View = glm::lookAt(
-			glm::vec3(0.0f, 0.0f, 20.0f), 
-			glm::vec3(0.0f, 0.0f, 0.25f),
-			glm::vec3(0.0f, 1.0f, 1.0f) 
-		);
-		
-		glm::mat4 Model = glm::mat4(1.0f);
-		
-		glm::mat4 MVP = Projection * View * Model; 
 
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
