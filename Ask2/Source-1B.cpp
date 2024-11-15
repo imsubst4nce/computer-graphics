@@ -1,11 +1,15 @@
-﻿//********************************
-// Αυτό το αρχείο θα το χρησιμοποιήσετε
-// για να υλοποιήσετε την άσκηση 1B της OpenGL
-//
-//ΑΜ: 5108  Όνομα: Νικόλαος Κουτσονικολής
-//ΑΜ: 4937  Όνομα: Αλέξανδρος Κωστόπουλος
+﻿// Ονοματεπώνυμα //
+/*
+    ΑΜ: 5108  Όνομα: Νικόλαος Κουτσονικολής
+    ΑΜ: 4937  Όνομα: Αλέξανδρος Κωστόπουλος
+*/
 
-//*********************************
+// Περιγραφή //
+/* 
+    Αυτό το αρχείο βασίζεται στο αρχέιο Source-1A.cpp
+    της προηγούμενης άσκησης με τροποποιήσεις ώστε να κατασκευάσουμε
+    αυτή τη φορά 3Δ γραφικά και να τα αποδώσουμε στην οθόνη
+*/
 
 // Include standard headers
 #include <stdio.h>
@@ -30,40 +34,29 @@ GLFWwindow* window;
 using namespace glm;
 using namespace std;
 
-
-glm::mat4 ViewMatrix;
-glm::mat4 ProjectionMatrix;
-
-glm::mat4 getViewMatrix() {
-	return ViewMatrix;
-}
-glm::mat4 getProjectionMatrix() {
-	return ProjectionMatrix;
-}
+// βοηθητικές μεταβλητές που θα κρατάνε τις συντεταγμένες
+// επειδή θέλουμε κίνηση στους άξονες xyz(x, y και zoom)
 float cam_x = 0.0f;
 float cam_y = 0.0f;
 float cam_z = 20.0f;
 
+// camera function for applying camera movement
+// W/X -> changing x coordinate
+// Q/Z -> changing y coordinate
+// =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
 void camera_function() {   
-    // move camera on x-axis
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cam_x += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
         cam_x -= 0.01f;
-    }
-
-    // move camera on y-axis
-    else if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+    } else if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
         cam_y += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        cam_y -= 0.01f;
-    }
-    
-    // zoom in/out
-    else if(glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-        cam_z += 0.01f;
-    } else if(glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
-        cam_z -= 0.01f;
+        cam_y -= 0.01f; 
+    } else if((glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)) {
+        cam_z += 0.01f; // incrementing z coord moves the camera further away from the maze
+    } else if((glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)) {
+        cam_z -= 0.01f; // decrementing the z coord moves the camera closer to the maze
     }
 }
 
@@ -165,7 +158,7 @@ struct Rectangle {
     float minX, maxX, minY, maxY;
 };
 
-// Function to create a rectangle from vertex data
+// function that creates a rectangle from vertex data
 Rectangle createRectangle(GLfloat* vertices, int startIdx) {
     return {
         vertices[startIdx], vertices[startIdx + 6], vertices[startIdx + 4], vertices[startIdx + 1]
@@ -188,7 +181,7 @@ bool checkIfSurpassedStart(Rectangle character) {
     return false;
 }
 
-// Function to check if two rectangles overlap/collide
+// check if two rectangles overlap/collide
 bool checkRectCollision(Rectangle border, Rectangle character) {
     return ((
         (character.minX <= -5.25f || character.maxX >= 4.75f) ||
@@ -199,11 +192,11 @@ bool checkRectCollision(Rectangle border, Rectangle character) {
     ));
 }
 
-// this function does all the movement
-// checking for key pressing and setting the next coordinates of the moveable character
-void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data, GLuint charvertexbuffer,std::vector<Rectangle> mazeWalls) {
+// this function has all the movement logic
+// checking for key press and updating the coordinates of the moveable character
+void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeWalls) {
     float moveX, moveY = 0.0f;
-    GLfloat new_char_vertex_buffer_data[] = {
+    GLfloat new_char_vertex_buffer_data[] = { // temporary array with character coordinates so we don't directly update the original
         // Bottom face(laying on xy-plane as z=0.25f)
         0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f,
@@ -216,27 +209,27 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         0.0f, 0.0f, 0.50f,
         0.0f, 0.0f, 0.50f,
     };
-    GLfloat char_starting_vertex_buffer_data[] = {
+    GLfloat char_starting_vertex_buffer_data[] = { // maze start character coordinates
         // Bottom face(laying on xy-plane as z=0.0f)
         -4.75f, 2.5f, 0.0f,
         -4.75f, 2.0f, 0.0f,
         -4.25f, 2.5f, 0.0f,
         -4.25f, 2.0f, 0.0f,
 
-        // Top face(z=1.0f)
+        // Top face(z=0.50f)
         -4.75f, 2.5f, 0.50f,
         -4.75f, 2.0f, 0.50f,
         -4.25f, 2.5f, 0.50f,
         -4.25f, 2.0f, 0.50f,
     };
-    GLfloat char_ending_vertex_buffer_data[] = {
+    GLfloat char_ending_vertex_buffer_data[] = { // maze end character coordinates
         // Bottom face(laying on xy-plane as z=0.0f)
         4.25f, -2.0f, 0.0f,
         4.25f, -2.5f, 0.0f,
         4.75f, -2.0f, 0.0f,
         4.75f, -2.5f, 0.0f,
 
-        // Top face(z=1.0f)
+        // Top face(z=0.50f)
         4.25f, -2.0f, 0.50f,
         4.25f, -2.5f, 0.50f,
         4.75f, -2.0f, 0.50f,
@@ -258,13 +251,14 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         new_char_vertex_buffer_data[i + 1] = char_vertex_buffer_data[i + 1] + moveY;
     }
 
-    // Create bounding box for the character
+    // create bounding box for the character
     Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
     
+    // check if the character surpassed the start or the end
     bool surpassedStart = checkIfSurpassedStart(charRect);
     bool surpassedEnd = checkIfSurpassedEnd(charRect);
 
-    // Check collision
+    // check for collision
     bool collision = false;
     for (const auto& wall : mazeWalls) {
         if (checkRectCollision(wall, charRect)) {
@@ -278,7 +272,10 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         for (int i = 0; i < 24; i++) {
             char_vertex_buffer_data[i] = new_char_vertex_buffer_data[i];
         }
-    } else if(surpassedStart) {
+    }
+
+    // check if surpassed start or end of maze to reposition character
+    if(surpassedStart) {
 	    for (int i = 0; i < 24; i++) {
             char_vertex_buffer_data[i] = char_ending_vertex_buffer_data[i];
         }
@@ -339,9 +336,8 @@ int main(void)
 
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-    GLfloat len = 5.0f, wid=2.5f, heig=2.5f;
-
-    /*************/
+    /**********************************************************************************/
+    /**********************************************************************************/
 
     // amount of vetrices(every triangle has 3)
     int number_of_maze_vertices = 576; // 192 triangles * 3 vertices
@@ -691,9 +687,7 @@ int main(void)
         121, 123, 125,  123, 125, 127,
     };
 
-    /*************/
-
-    // vertex data of char
+    // vertex data of character
     GLfloat char_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
         -4.75f, 2.5f, 0.0f,
@@ -733,21 +727,8 @@ int main(void)
         3, 6, 7,
     };
 
-    // color data
+    // color data of maze and character
     GLfloat a = 0.8f;
-    static const GLfloat char_color[] = {
-        // Top face (Bright)
-        0.6f, 0.5f, 0.0f, a,
-        0.6f, 0.5f, 0.0f, a,
-        0.6f, 0.5f, 0.0f, a,
-        0.6f, 0.5f, 0.0f, a,
-
-        // Bottom face (Dark)
-        0.85f, 0.75f, 0.0f, a,
-        0.85f, 0.75f, 0.0f, a,
-        0.85f, 0.75f, 0.0f, a,
-        0.85f, 0.75f, 0.0f, a,
-    };
     static const GLfloat maze_color[] = {
         0.0f, 0.0f, 0.7f, a,
         0.0f, 0.0f, 0.7f, a,
@@ -909,10 +890,24 @@ int main(void)
         0.0f, 0.0f, 1.0f, a,
         0.0f, 0.0f, 1.0f, a,
     };
+    static const GLfloat char_color[] = {
+        // Top face (Bright)
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
+        0.6f, 0.5f, 0.0f, a,
 
-    // init vao, ebo, buffers
-    GLuint charvertexbuffer, charVAO, charcolorbuffer;
+        // Bottom face (Dark)
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+        0.85f, 0.75f, 0.0f, a,
+    };
+
+
+    // init vao, ebo, buffers for character and maze
     GLuint mazevertexbuffer, mazeVAO, mazecolorbuffer;
+    GLuint charvertexbuffer, charVAO, charcolorbuffer;
     unsigned int mazeEBO, charEBO;
 
     glGenVertexArrays(1, &charVAO);
@@ -923,24 +918,6 @@ int main(void)
     glGenBuffers(1, &mazecolorbuffer);
     glGenBuffers(1, &charEBO);
     glGenBuffers(1, &mazeEBO);
-    
-
-    // setup moveable character
-    glBindVertexArray(charVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
-    // GL_DYNAMIC_DRAW makes the buffer mutable, 
-    // and since we move our character that means we need to make it dynamic
-	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, charEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // setup char color 
-    glBindBuffer(GL_ARRAY_BUFFER, charcolorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(char_color), char_color, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     // setup maze
     glBindVertexArray(mazeVAO);
@@ -951,13 +928,31 @@ int main(void)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // setup maze color 
+    // setup maze color
     glBindBuffer(GL_ARRAY_BUFFER, mazecolorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(maze_color), maze_color, GL_STATIC_DRAW);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+    // setup character
+    glBindVertexArray(charVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
+    // GL_DYNAMIC_DRAW makes the buffer mutable, 
+    // and since we move our character that means we need to make it dynamic
+	glBufferData(GL_ARRAY_BUFFER, sizeof(char_vertex_buffer_data), char_vertex_buffer_data, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, charEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(char_indices), char_indices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // setup character color
+    glBindBuffer(GL_ARRAY_BUFFER, charcolorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(char_color), char_color, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
     // Create bounding boxes for the maze walls
+    // will be used for collision detection later on
     std::vector<Rectangle> mazeWalls = {
         createRectangle(maze_vertex_buffer_data, 0),
         createRectangle(maze_vertex_buffer_data, 24),
@@ -977,7 +972,7 @@ int main(void)
         createRectangle(maze_vertex_buffer_data, 372), // need to fix this
     };
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: shows polygons
 
 	do {
 		// Clear the screen
@@ -986,28 +981,27 @@ int main(void)
 		// Use our shader
 		glUseProgram(programID);
         
-         glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
+        glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
         // Camera matrix
         glm::mat4 View = glm::lookAt(
-            glm::vec3(cam_x, cam_y, cam_z), 
+            glm::vec3(cam_x, cam_y, cam_z), // cam position coordinates - these are the ones we can control
             glm::vec3(0.0f, 0.0f, 0.25f),
             glm::vec3(0.0f, 1.0f, 0.0f) 
         );
         glm::mat4 Model = glm::mat4(1.0f);
         glm::mat4 MVP = Projection * View * Model;
-
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
-        camera_function();
+        camera_function();  // call camera_function to check for camera movement
 
         // draw maze
         glBindVertexArray(mazeVAO);
         glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
 
-        // draw moveable character + deal with movement
+        // draw character
         glBindVertexArray(charVAO);
         glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
-        processInput(window, char_vertex_buffer_data, maze_vertex_buffer_data, charvertexbuffer, mazeWalls);
+        processInput(char_vertex_buffer_data, mazeWalls);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
@@ -1015,8 +1009,7 @@ int main(void)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-	} // Check if the ESC key was pressed or the window was closed
-	while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+	} while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);  // Check if the ESC key was pressed or the window was closed
 
 	// Cleanup
     glDeleteVertexArrays(1, &charVAO);
