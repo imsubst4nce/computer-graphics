@@ -998,7 +998,7 @@ int main(void)
         glBindVertexArray(mazeVAO);
         glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
 
-        // draw character
+        // draw character + movement
         glBindVertexArray(charVAO);
         glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
         processInput(char_vertex_buffer_data, mazeWalls);
