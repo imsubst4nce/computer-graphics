@@ -203,7 +203,7 @@ void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeW
         0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f,
 
-        // Top face(z=1.0f)
+        // Top face(z=0.5f)
         0.0f, 0.0f, 0.50f,
         0.0f, 0.0f, 0.50f,
         0.0f, 0.0f, 0.50f,
