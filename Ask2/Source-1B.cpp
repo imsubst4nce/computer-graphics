@@ -175,7 +175,6 @@ Rectangle createRectangle(GLfloat* vertices, int startIdx) {
 // check if we have surpassed the end of the maze
 bool checkIfSurpassedEnd(Rectangle character) {
     if(character.maxX >= 4.75f) {
-        // teleport to start code needs to be implemented here
         return true;
     }
     return false;
@@ -205,43 +204,43 @@ bool checkRectCollision(Rectangle border, Rectangle character) {
 void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat *maze_vertex_buffer_data, GLuint charvertexbuffer,std::vector<Rectangle> mazeWalls) {
     float moveX, moveY = 0.0f;
     GLfloat new_char_vertex_buffer_data[] = {
-        // Bottom face(laying on xy-plane as z=0.0f)
-        0.0f, 0.0f, 0.25f,
-        0.0f, 0.0f, 0.25f,
-        0.0f, 0.0f, 0.25f,
-        0.0f, 0.0f, 0.25f,
+        // Bottom face(laying on xy-plane as z=0.25f)
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
 
         // Top face(z=1.0f)
-        0.0f, 0.0f, 0.75f,
-        0.0f, 0.0f, 0.75f,
-        0.0f, 0.0f, 0.75f,
-        0.0f, 0.0f, 0.75f,
+        0.0f, 0.0f, 0.50f,
+        0.0f, 0.0f, 0.50f,
+        0.0f, 0.0f, 0.50f,
+        0.0f, 0.0f, 0.50f,
     };
     GLfloat char_starting_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
-        -4.75f, 2.5f, 0.25f,
-        -4.75f, 2.0f, 0.25f,
-        -4.25f, 2.5f, 0.25f,
-        -4.25f, 2.0f, 0.25f,
+        -4.75f, 2.5f, 0.0f,
+        -4.75f, 2.0f, 0.0f,
+        -4.25f, 2.5f, 0.0f,
+        -4.25f, 2.0f, 0.0f,
 
         // Top face(z=1.0f)
-        -4.75f, 2.5f, 0.75f,
-        -4.75f, 2.0f, 0.75f,
-        -4.25f, 2.5f, 0.75f,
-        -4.25f, 2.0f, 0.75f,
+        -4.75f, 2.5f, 0.50f,
+        -4.75f, 2.0f, 0.50f,
+        -4.25f, 2.5f, 0.50f,
+        -4.25f, 2.0f, 0.50f,
     };
     GLfloat char_ending_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
-        4.75f, -2.0f, 0.25f,
-        4.75f, -2.5f, 0.25f,
-        4.25f, -2.0f, 0.25f,
-        4.25f, -2.5f, 0.25f,
+        4.25f, -2.0f, 0.0f,
+        4.25f, -2.5f, 0.0f,
+        4.75f, -2.0f, 0.0f,
+        4.75f, -2.5f, 0.0f,
 
         // Top face(z=1.0f)
-        4.75f, -2.0f, 0.75f,
-        4.75f, -2.5f, 0.75f,
-        4.25f, -2.0f, 0.75f,
-        4.25f, -2.5f, 0.75f,
+        4.25f, -2.0f, 0.50f,
+        4.25f, -2.5f, 0.50f,
+        4.75f, -2.0f, 0.50f,
+        4.75f, -2.5f, 0.50f,
     };
 
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
@@ -261,6 +260,9 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
 
     // Create bounding box for the character
     Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
+    
+    bool surpassedStart = checkIfSurpassedStart(charRect);
+    bool surpassedEnd = checkIfSurpassedEnd(charRect);
 
     // Check collision
     bool collision = false;
@@ -271,9 +273,6 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
         }
     }
 
-    bool surpassedStart = checkIfSurpassedStart(charRect);
-    bool surpassedEnd = checkIfSurpassedEnd(charRect);
-
     // update pos if no collision
     if (!collision) {
         for (int i = 0; i < 24; i++) {
@@ -283,29 +282,9 @@ void processInput(GLFWwindow *window, GLfloat *char_vertex_buffer_data, GLfloat 
 	    for (int i = 0; i < 24; i++) {
             char_vertex_buffer_data[i] = char_ending_vertex_buffer_data[i];
         }
-        // create the bounding box of the character again
-        Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
-        // Check collision again
-        bool collision = false;
-        for (const auto& wall : mazeWalls) {
-            if (checkRectCollision(wall, charRect)) {
-                collision = true;
-                break;
-            }
-        }
     } else if(surpassedEnd) {
         for (int i = 0; i < 24; i++) {
             char_vertex_buffer_data[i] = char_starting_vertex_buffer_data[i];
-        }
-        // create the bounding box of the character again
-        Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
-        // Check collision again
-        bool collision = false;
-        for (const auto& wall : mazeWalls) {
-            if (checkRectCollision(wall, charRect)) {
-                collision = true;
-                break;
-            }
         }
     }
 }
@@ -582,7 +561,6 @@ int main(void)
         3.0f, 3.0f, 1.0f,
         3.0f, 0.0f, 1.0f,
     };
-
     unsigned int maze_indices[] = {
         // 1st rectangle - top-left border
         0, 1, 2,        1, 2, 3,
@@ -718,18 +696,17 @@ int main(void)
     // vertex data of char
     GLfloat char_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
-        -4.75f, 2.5f, 0.25f,
-        -4.75f, 2.0f, 0.25f,
-        -4.25f, 2.5f, 0.25f,
-        -4.25f, 2.0f, 0.25f,
+        -4.75f, 2.5f, 0.0f,
+        -4.75f, 2.0f, 0.0f,
+        -4.25f, 2.5f, 0.0f,
+        -4.25f, 2.0f, 0.0f,
 
         // Top face(z=1.0f)
-        -4.75f, 2.5f, 0.75f,
-        -4.75f, 2.0f, 0.75f,
-        -4.25f, 2.5f, 0.75f,
-        -4.25f, 2.0f, 0.75f,
+        -4.75f, 2.5f, 0.5f,
+        -4.75f, 2.0f, 0.5f,
+        -4.25f, 2.5f, 0.5f,
+        -4.25f, 2.0f, 0.5f,
     };
-
     unsigned int char_indices[] = {
         // bottom face
         0, 1, 2,
@@ -771,7 +748,6 @@ int main(void)
         0.85f, 0.75f, 0.0f, a,
         0.85f, 0.75f, 0.0f, a,
     };
-
     static const GLfloat maze_color[] = {
         0.0f, 0.0f, 0.7f, a,
         0.0f, 0.0f, 0.7f, a,
@@ -1001,7 +977,7 @@ int main(void)
         createRectangle(maze_vertex_buffer_data, 372), // need to fix this
     };
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: deixnei ta polygwna
 
 	do {
 		// Clear the screen
