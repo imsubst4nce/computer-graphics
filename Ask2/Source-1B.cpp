@@ -165,6 +165,17 @@ Rectangle createRectangle(GLfloat* vertices, int startIdx) {
     };
 };
 
+// check if two rectangles overlap/collide
+bool checkRectCollision(Rectangle border, Rectangle character) {
+    return ((
+        (character.minX <= -5.25f || character.maxX >= 4.75f) ||
+        (character.minX < border.maxX &&
+        character.maxX > border.minX &&
+        character.minY < border.maxY &&
+        character.maxY > border.minY)
+    ));
+}
+
 // check if we have surpassed the end of the maze
 bool checkIfSurpassedEnd(Rectangle character) {
     if(character.maxX >= 4.75f) {
@@ -179,17 +190,6 @@ bool checkIfSurpassedStart(Rectangle character) {
         return true;
     }
     return false;
-}
-
-// check if two rectangles overlap/collide
-bool checkRectCollision(Rectangle border, Rectangle character) {
-    return ((
-        (character.minX <= -5.25f || character.maxX >= 4.75f) ||
-        (character.minX < border.maxX &&
-        character.maxX > border.minX &&
-        character.minY < border.maxY &&
-        character.maxY > border.minY)
-    ));
 }
 
 // this function has all the movement logic
@@ -209,7 +209,7 @@ void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeW
         0.0f, 0.0f, 0.50f,
         0.0f, 0.0f, 0.50f,
     };
-    GLfloat char_starting_vertex_buffer_data[] = { // maze start character coordinates
+    GLfloat char_start_vertex_buffer_data[] = { // maze start character coordinates
         // Bottom face(laying on xy-plane as z=0.0f)
         -4.75f, 2.5f, 0.0f,
         -4.75f, 2.0f, 0.0f,
@@ -222,7 +222,7 @@ void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeW
         -4.25f, 2.5f, 0.50f,
         -4.25f, 2.0f, 0.50f,
     };
-    GLfloat char_ending_vertex_buffer_data[] = { // maze end character coordinates
+    GLfloat char_end_vertex_buffer_data[] = { // maze end character coordinates
         // Bottom face(laying on xy-plane as z=0.0f)
         4.25f, -2.0f, 0.0f,
         4.25f, -2.5f, 0.0f,
@@ -237,13 +237,13 @@ void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeW
     };
 
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
-        moveY = 0.001f;
+        moveY = 0.002f;
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-        moveY = -0.001f;
+        moveY = -0.002f;
     if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
-        moveX = -0.001f;
+        moveX = -0.002f;
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-        moveX = 0.001f;
+        moveX = 0.002f;
 
     // calculate new char pos and store them seperately
     for (int i = 0; i < 24; i += 3) {
@@ -254,10 +254,6 @@ void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeW
     // create bounding box for the character
     Rectangle charRect = createRectangle(new_char_vertex_buffer_data, 0);
     
-    // check if the character surpassed the start or the end
-    bool surpassedStart = checkIfSurpassedStart(charRect);
-    bool surpassedEnd = checkIfSurpassedEnd(charRect);
-
     // check for collision
     bool collision = false;
     for (const auto& wall : mazeWalls) {
@@ -274,14 +270,20 @@ void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeW
         }
     }
 
+    // check if the character surpassed the start
+    bool surpassedStart = checkIfSurpassedStart(charRect);
     // check if surpassed start or end of maze to reposition character
     if(surpassedStart) {
 	    for (int i = 0; i < 24; i++) {
-            char_vertex_buffer_data[i] = char_ending_vertex_buffer_data[i];
+            char_vertex_buffer_data[i] = char_end_vertex_buffer_data[i];
         }
-    } else if(surpassedEnd) {
+    }
+
+    // check if the character surpassed the end
+    bool surpassedEnd = checkIfSurpassedEnd(charRect);
+    if(surpassedEnd) {
         for (int i = 0; i < 24; i++) {
-            char_vertex_buffer_data[i] = char_starting_vertex_buffer_data[i];
+            char_vertex_buffer_data[i] = char_start_vertex_buffer_data[i];
         }
     }
 }
@@ -304,7 +306,7 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(950, 950, "Άσκηση 1Β - 2024", NULL, NULL);
+	window = glfwCreateWindow(950, 950, "Άσκηση 1B - 2024", NULL, NULL);
 
 	if (window == NULL) {
 		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
@@ -335,6 +337,8 @@ int main(void)
 	GLuint programID = LoadShaders("P1BVertexShader.vertexshader", "P1BFragmentShader.fragmentshader");
 
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+
+    glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
 
     /**********************************************************************************/
     /**********************************************************************************/
@@ -695,7 +699,7 @@ int main(void)
         -4.25f, 2.5f, 0.0f,
         -4.25f, 2.0f, 0.0f,
 
-        // Top face(z=1.0f)
+        // Top face(z=0.5f)
         -4.75f, 2.5f, 0.5f,
         -4.75f, 2.0f, 0.5f,
         -4.25f, 2.5f, 0.5f,
@@ -931,8 +935,8 @@ int main(void)
     // setup maze color
     glBindBuffer(GL_ARRAY_BUFFER, mazecolorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(maze_color), maze_color, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(1);
 
     // setup character
     glBindVertexArray(charVAO);
@@ -969,7 +973,7 @@ int main(void)
         createRectangle(maze_vertex_buffer_data, 300),
         createRectangle(maze_vertex_buffer_data, 324),
         createRectangle(maze_vertex_buffer_data, 348),
-        createRectangle(maze_vertex_buffer_data, 372), // need to fix this
+        createRectangle(maze_vertex_buffer_data, 372),
     };
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: shows polygons
@@ -981,10 +985,9 @@ int main(void)
 		// Use our shader
 		glUseProgram(programID);
         
-        glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
         // Camera matrix
         glm::mat4 View = glm::lookAt(
-            glm::vec3(cam_x, cam_y, cam_z), // cam position coordinates - these are the ones we can control
+            glm::vec3(cam_x, cam_y, cam_z), // cam position coordinates
             glm::vec3(0.0f, 0.0f, 0.25f),
             glm::vec3(0.0f, 1.0f, 0.0f) 
         );
@@ -1009,7 +1012,8 @@ int main(void)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-	} while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);  // Check if the ESC key was pressed or the window was closed
+	} // Check if the SPACE key was pressed or the window was closed
+    while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
 	// Cleanup
     glDeleteVertexArrays(1, &charVAO);
