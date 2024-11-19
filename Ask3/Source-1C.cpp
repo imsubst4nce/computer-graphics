@@ -741,6 +741,46 @@ int main(void)
         3, 6, 7,
     };
 
+    // vertex data of treasure
+    GLfloat treasure_vertex_buffer_data[] = {
+        // Bottom face(laying on xy-plane as z=0.0f)
+        -3.9f, 2.8f, 0.0f,
+        -3.9f, 2.0f, 0.0f,
+        -3.1f, 2.8f, 0.0f,
+        -3.1f, 2.0f, 0.0f,
+
+        // Top face(z=0.8f)
+        -3.9f, 2.8f, 0.8f,
+        -3.9f, 2.0f, 0.8f,
+        -3.1f, 2.8f, 0.8f,
+        -3.1f, 2.0f, 0.8f,
+    };
+    unsigned int treasure_indices[] = {
+        // bottom face
+        0, 1, 2,
+        1, 2, 3,
+
+        // top face
+        4, 5, 6,
+        5, 6, 7,
+
+        // back face
+        1, 3, 5,
+        3, 5, 7,
+
+        // front face
+        0, 2, 4,
+        2, 4, 6,
+
+        // left face
+        0, 1, 4,
+        1, 4, 5,
+
+        // right face
+        2, 3, 6,
+        3, 6, 7,
+    };
+    
     // color data of maze and character
     GLfloat a = 0.8f;
     static const GLfloat maze_color[] = {
@@ -917,21 +957,38 @@ int main(void)
         0.85f, 0.75f, 0.0f, a,
         0.85f, 0.75f, 0.0f, a,
     };
+    static const GLfloat treasure_color[] = {
+        // Top face (Bright)
+        0.6f, 0.5f, 0.3f, a,
+        0.6f, 0.5f, 0.3f, a,
+        0.6f, 0.5f, 0.3f, a,
+        0.6f, 0.5f, 0.3f, a,
 
+        // Bottom face (Dark)
+        0.45f, 0.75f, 0.1f, a,
+        0.45f, 0.75f, 0.1f, a,
+        0.45f, 0.75f, 0.1f, a,
+        0.45f, 0.75f, 0.1f, a,
+    };
 
     // init vao, ebo, buffers for character and maze
     GLuint mazevertexbuffer, mazeVAO, mazecolorbuffer;
     GLuint charvertexbuffer, charVAO, charcolorbuffer;
-    unsigned int mazeEBO, charEBO;
+    GLuint treasurevertexbuffer, treasureVAO, treasurecolorbuffer;
+    unsigned int mazeEBO, charEBO, treasureEBO;
 
     glGenVertexArrays(1, &charVAO);
     glGenVertexArrays(1, &mazeVAO);
+    glGenVertexArrays(1, &treasureVAO);
     glGenBuffers(1, &charvertexbuffer);
     glGenBuffers(1, &mazevertexbuffer);
+    glGenBuffers(1, &treasurevertexbuffer);
     glGenBuffers(1, &charcolorbuffer);
     glGenBuffers(1, &mazecolorbuffer);
+    glGenBuffers(1, &treasurecolorbuffer);
     glGenBuffers(1, &charEBO);
     glGenBuffers(1, &mazeEBO);
+    glGenBuffers(1, &treasureEBO);
 
     // setup maze
     glBindVertexArray(mazeVAO);
@@ -964,6 +1021,21 @@ int main(void)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(char_color), char_color, GL_STATIC_DRAW);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    // setup treasure
+    glBindVertexArray(treasureVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, treasurevertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data, GL_STATIC_DRAW); // GL_STATIC_DRAW makes buffer immutable
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, treasureEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(treasure_indices), treasure_indices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // setup treasure color
+    glBindBuffer(GL_ARRAY_BUFFER, treasurecolorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_color), treasure_color, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(1);
 
     // Create bounding boxes for the maze walls
     // will be used for collision detection later on
@@ -1010,6 +1082,10 @@ int main(void)
         // draw maze
         glBindVertexArray(mazeVAO);
         glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
+
+        // draw treasure
+        glBindVertexArray(treasureVAO);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         // draw character + movement
         glBindVertexArray(charVAO);
