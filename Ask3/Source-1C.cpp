@@ -6,9 +6,8 @@
 
 // Περιγραφή //
 /* 
-    Αυτό το αρχείο βασίζεται στο αρχέιο Source-1A.cpp
-    της προηγούμενης άσκησης με τροποποιήσεις ώστε να κατασκευάσουμε
-    αυτή τη φορά 3Δ γραφικά και να τα αποδώσουμε στην οθόνη
+    Αυτό το αρχείο βασίζεται στο αρχέιο Source-1B.cpp
+    της προηγούμενης άσκησης με τροποποιήσεις
 */
 
 // Include standard headers
@@ -35,8 +34,6 @@ GLFWwindow* window;
 using namespace glm;
 using namespace std;
 
-// srand (static_cast <unsigned> (time(0)));
-
 // βοηθητικές μεταβλητές που θα κρατάνε τις συντεταγμένες
 // επειδή θέλουμε κίνηση στους άξονες xyz(x, y και zoom)
 float cam_x = 0.0f;
@@ -49,20 +46,27 @@ float pan_y = 0.0f;
 // W/X -> changing x coordinate
 // Q/Z -> changing y coordinate
 // =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
-void camera_function() {   
+void camera_function() {
+    // move around x
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cam_x += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
         cam_x -= 0.01f;
-    } else if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+    }
+    // move around y
+    else if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
         cam_y += 0.01f;
     } else if(glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        cam_y -= 0.01f; 
-    } else if((glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)) {
+        cam_y -= 0.01f;  
+    }
+    // zoom in/out
+    else if((glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)) {
         cam_z += 0.01f; // incrementing z coord moves the camera further away from the maze
     } else if((glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)) {
         cam_z -= 0.01f; // decrementing the z coord moves the camera closer to the maze
-    } else if ((glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)) {
+    }
+    // xy panning
+    else if ((glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)) {
         pan_x -= 0.01f; // pan to the left
     } else if ((glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)) {
         pan_x += 0.01f; // pan to the right
@@ -81,8 +85,8 @@ bool areAcceptedCoordinates(min_x,min_y) {
 }
 */
 
+// random xy coordinates generator for treasure char
 std::pair<GLfloat, GLfloat> createRandomCoordinates() {
-    // random xy coordinates generator for treasure char
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<GLfloat> distribution(-5.0f, 5.0f);
