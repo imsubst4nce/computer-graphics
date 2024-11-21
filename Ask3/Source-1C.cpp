@@ -14,6 +14,7 @@
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
+#include <random>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -33,6 +34,8 @@ GLFWwindow* window;
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 using namespace std;
+
+// srand (static_cast <unsigned> (time(0)));
 
 // βοηθητικές μεταβλητές που θα κρατάνε τις συντεταγμένες
 // επειδή θέλουμε κίνηση στους άξονες xyz(x, y και zoom)
@@ -68,6 +71,31 @@ void camera_function() {
     } else if ((glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)) {
         pan_y -= 0.01f; // pan downwards
     }
+}
+
+/*
+// check if generated coordinates are accepted
+TO BE IMPLEMENTED!!!
+bool areAcceptedCoordinates(min_x,min_y) {
+
+}
+*/
+
+std::pair<GLfloat, GLfloat> createRandomCoordinates() {
+    // random xy coordinates generator for treasure char
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<GLfloat> distribution(-5.0f, 5.0f);
+    GLfloat min_x, min_y, max_x, max_y;
+
+    // do {
+    min_x = floorf(distribution(gen)*100)/100; // random min_x
+    min_y = floorf(distribution(gen)*100)/100; // random min_y
+    max_x = min_x + 0.8f;
+    max_y = min_y + 0.8f;
+    // } while(!areAcceptedCoordinates(min_x,min_y));
+
+    return std::make_pair(min_x,min_y);
 }
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
@@ -150,7 +178,6 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 		printf("%s\n", &ProgramErrorMessage[0]);
 	}
 
-
 	glDetachShader(ProgramID, VertexShaderID);
 	glDetachShader(ProgramID, FragmentShaderID);
 
@@ -165,7 +192,7 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 
 // struct to describe collision rectangles
 struct Rectangle {
-    float minX, maxX, minY, maxY;
+    GLfloat minX, maxX, minY, maxY;
 };
 
 // function that creates a rectangle from vertex data
@@ -205,7 +232,7 @@ bool checkIfSurpassedStart(Rectangle character) {
 // this function has all the movement logic
 // checking for key press and updating the coordinates of the moveable character
 void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeWalls) {
-    float moveX, moveY = 0.0f;
+    GLfloat moveX, moveY = 0.0f;
     GLfloat new_char_vertex_buffer_data[] = { // temporary array with character coordinates so we don't directly update the original
         // Bottom face(laying on xy-plane as z=0.25f)
         0.0f, 0.0f, 0.0f,
@@ -740,20 +767,27 @@ int main(void)
         2, 3, 6,
         3, 6, 7,
     };
+    
+    // call createRandomCoordinates to create the treasure's coordinates
+    std::pair<GLfloat, GLfloat> treasure_xy = createRandomCoordinates();
+    GLfloat min_x = treasure_xy.first;
+    GLfloat min_y = treasure_xy.second;
+    GLfloat max_x = min_x + 0.8f;
+    GLfloat max_y = min_y + 0.8f;
 
     // vertex data of treasure
     GLfloat treasure_vertex_buffer_data[] = {
         // Bottom face(laying on xy-plane as z=0.0f)
-        -3.9f, 2.8f, 0.0f,
-        -3.9f, 2.0f, 0.0f,
-        -3.1f, 2.8f, 0.0f,
-        -3.1f, 2.0f, 0.0f,
+        min_x, max_y, 0.0f,
+        min_x, min_y, 0.0f,
+        max_x, max_y, 0.0f,
+        max_x, min_y, 0.0f,
 
         // Top face(z=0.8f)
-        -3.9f, 2.8f, 0.8f,
-        -3.9f, 2.0f, 0.8f,
-        -3.1f, 2.8f, 0.8f,
-        -3.1f, 2.0f, 0.8f,
+        min_x, max_y, 0.8f,
+        min_x, min_y, 0.8f,
+        max_x, max_y, 0.8f,
+        max_x, min_y, 0.8f,
     };
     unsigned int treasure_indices[] = {
         // bottom face
@@ -971,6 +1005,29 @@ int main(void)
         0.45f, 0.75f, 0.1f, a,
     };
 
+    // Create bounding boxes for the maze walls
+    // will be used for collision detection later on
+    std::vector<Rectangle> mazeWalls = {
+        createRectangle(maze_vertex_buffer_data, 0),
+        createRectangle(maze_vertex_buffer_data, 24),
+        createRectangle(maze_vertex_buffer_data, 48),
+        createRectangle(maze_vertex_buffer_data, 72),
+        createRectangle(maze_vertex_buffer_data, 96),
+        createRectangle(maze_vertex_buffer_data, 120),
+        createRectangle(maze_vertex_buffer_data, 144),
+        createRectangle(maze_vertex_buffer_data, 180),
+        createRectangle(maze_vertex_buffer_data, 204),
+        createRectangle(maze_vertex_buffer_data, 228),
+        createRectangle(maze_vertex_buffer_data, 252),
+        createRectangle(maze_vertex_buffer_data, 276),
+        createRectangle(maze_vertex_buffer_data, 300),
+        createRectangle(maze_vertex_buffer_data, 324),
+        createRectangle(maze_vertex_buffer_data, 348),
+        createRectangle(maze_vertex_buffer_data, 372),
+    };
+
+    // Accepted Positions for the trasure characted to appear
+
     // init vao, ebo, buffers for character and maze
     GLuint mazevertexbuffer, mazeVAO, mazecolorbuffer;
     GLuint charvertexbuffer, charVAO, charcolorbuffer;
@@ -1036,27 +1093,6 @@ int main(void)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_color), treasure_color, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(1);
-
-    // Create bounding boxes for the maze walls
-    // will be used for collision detection later on
-    std::vector<Rectangle> mazeWalls = {
-        createRectangle(maze_vertex_buffer_data, 0),
-        createRectangle(maze_vertex_buffer_data, 24),
-        createRectangle(maze_vertex_buffer_data, 48),
-        createRectangle(maze_vertex_buffer_data, 72),
-        createRectangle(maze_vertex_buffer_data, 96),
-        createRectangle(maze_vertex_buffer_data, 120),
-        createRectangle(maze_vertex_buffer_data, 144),
-        createRectangle(maze_vertex_buffer_data, 180),
-        createRectangle(maze_vertex_buffer_data, 204),
-        createRectangle(maze_vertex_buffer_data, 228),
-        createRectangle(maze_vertex_buffer_data, 252),
-        createRectangle(maze_vertex_buffer_data, 276),
-        createRectangle(maze_vertex_buffer_data, 300),
-        createRectangle(maze_vertex_buffer_data, 324),
-        createRectangle(maze_vertex_buffer_data, 348),
-        createRectangle(maze_vertex_buffer_data, 372),
-    };
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: shows polygons
 
