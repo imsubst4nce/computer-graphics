@@ -77,13 +77,28 @@ void camera_function() {
     }
 }
 
-/*
-// check if generated coordinates are accepted
-TO BE IMPLEMENTED!!!
-bool areAcceptedCoordinates(min_x,min_y) {
 
+// check if generated coordinates are accepted
+bool areAcceptedCoordinates(GLfloat min_x, GLfloat min_y, GLfloat max_x, GLfloat max_y) {
+    if (!((min_x >= -5.0f && max_x <= -4.0f) && ((min_y >= 3.0f && max_y <= 5.0f) || (min_y >= -5.0f && max_y <= 1.5f))) &&
+        !(min_x >= -4.0f && max_x <= 4.0f && min_y >= 4.0f && max_y <= 5.0f) &&
+        !(min_x >= 4.0f && max_x <= 5.0f && ((min_y >= -1.5f && max_y <= 5.0f) || (min_y >= -5.0f && max_y <= -3.0f))) &&
+        !(min_x >= -4.0f && max_x <= 4.0f && min_y >= -5.0f && max_y <= -4.0f) &&
+        !(min_x >= -3.0f && max_x <= -2.0f && min_y >= -4.0f && max_y <= -3.0f) &&
+        !(min_x >= -1.0f && max_x <= 1.0f && min_y >= -4.0f && max_y <= -3.0f) &&
+        !(min_x >= -3.0f && max_x <= -1.0f && min_y >= -2.0f && max_y <= -1.0f) &&
+        !(min_x >= -3.0f && max_x <= -2.0f && min_y >= 0.0f && max_y <= 3.0f) &&
+        !(min_x >= -2.0f && max_x <= 1.0f && min_y >= 2.0f && max_y <= 3.0f) &&
+        !(min_x >= -1.0f && max_x <= 1.0f && min_y >= 0.0f && max_y <= 1.0f) &&
+        !(min_x >= 0.0f && max_x <= 1.0f && min_y >= -2.0f && max_y <= 0.0f) &&
+        !(min_x >= 1.0f && max_x <= 3.0f && min_y >= -2.0f && max_y <= -1.0f) &&
+        !(min_x >= 2.0f && max_x <= 3.0f && min_y >= -3.0f && max_y <= -2.0f) &&
+        !(min_x >= 2.0f && max_x <= 3.0f && min_y >= 0.0f && max_y <= 3.0f)) {
+            return true;
+    }
+    return false;
 }
-*/
+
 
 // random xy coordinates generator for treasure char
 std::pair<GLfloat, GLfloat> createRandomCoordinates() {
@@ -92,12 +107,12 @@ std::pair<GLfloat, GLfloat> createRandomCoordinates() {
     uniform_real_distribution<GLfloat> distribution(-5.0f, 5.0f);
     GLfloat min_x, min_y, max_x, max_y;
 
-    // do {
+    do {
     min_x = floorf(distribution(gen)*100)/100; // random min_x
     min_y = floorf(distribution(gen)*100)/100; // random min_y
     max_x = min_x + 0.8f;
     max_y = min_y + 0.8f;
-    // } while(!areAcceptedCoordinates(min_x,min_y));
+    } while(!areAcceptedCoordinates(min_x, min_y, max_x, max_y));
 
     return std::make_pair(min_x,min_y);
 }
