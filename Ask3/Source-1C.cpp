@@ -79,7 +79,7 @@ void camera_function() {
 
 
 // check if generated coordinates are accepted
-bool areAcceptedCoordinates(GLfloat min_x, GLfloat min_y, GLfloat max_x, GLfloat max_y) {
+bool checkAreAcceptedCoordinates(GLfloat min_x, GLfloat min_y, GLfloat max_x, GLfloat max_y) {
     if (!((min_x >= -5.0f && max_x <= -4.0f) && ((min_y >= 3.0f && max_y <= 5.0f) || (min_y >= -5.0f && max_y <= 1.5f))) &&
         !(min_x >= -4.0f && max_x <= 4.0f && min_y >= 4.0f && max_y <= 5.0f) &&
         !(min_x >= 4.0f && max_x <= 5.0f && ((min_y >= -1.5f && max_y <= 5.0f) || (min_y >= -5.0f && max_y <= -3.0f))) &&
@@ -99,7 +99,6 @@ bool areAcceptedCoordinates(GLfloat min_x, GLfloat min_y, GLfloat max_x, GLfloat
     return false;
 }
 
-
 // random xy coordinates generator for treasure char
 std::pair<GLfloat, GLfloat> createRandomCoordinates() {
     random_device rd;
@@ -108,11 +107,11 @@ std::pair<GLfloat, GLfloat> createRandomCoordinates() {
     GLfloat min_x, min_y, max_x, max_y;
 
     do {
-    min_x = floorf(distribution(gen)*100)/100; // random min_x
-    min_y = floorf(distribution(gen)*100)/100; // random min_y
-    max_x = min_x + 0.8f;
-    max_y = min_y + 0.8f;
-    } while(!areAcceptedCoordinates(min_x, min_y, max_x, max_y));
+        min_x = floorf(distribution(gen)*100)/100; // random min_x
+        min_y = floorf(distribution(gen)*100)/100; // random min_y
+        max_x = min_x + 0.8f;
+        max_y = min_y + 0.8f;
+    } while(!checkAreAcceptedCoordinates(min_x, min_y, max_x, max_y));
 
     return std::make_pair(min_x,min_y);
 }
