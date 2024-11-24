@@ -77,6 +77,8 @@ void camera_function() {
     } else if ((glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)) {
         pan_y -= 0.01f; // pan downwards
     }
+    
+    return;
 }
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
@@ -176,6 +178,10 @@ struct Rectangle {
     GLfloat minX, maxX, minY, maxY;
 };
 
+// some rectangle definitions
+Rectangle charRect, treasureRect;
+std::vector<Rectangle> mazeWalls;
+
 // function that creates a rectangle from vertex data
 Rectangle createRectangle(GLfloat* vertices, int startIdx) {
     return {
@@ -212,7 +218,7 @@ bool checkIfSurpassedStart(Rectangle character) {
 
 // this function has all the movement logic
 // checking for key press and updating the coordinates of the moveable character
-void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeWalls, Rectangle charRect) {
+void processInput(GLfloat *char_vertex_buffer_data) {
     GLfloat moveX, moveY = 0.0f;
     GLfloat new_char_vertex_buffer_data[] = { // temporary array with character coordinates so we don't directly update the original
         // Bottom face(laying on xy-plane as z=0.25f)
@@ -304,17 +310,19 @@ void processInput(GLfloat *char_vertex_buffer_data, std::vector<Rectangle> mazeW
             char_vertex_buffer_data[i] = char_start_vertex_buffer_data[i];
         }
     }
+
+    return;
 }
 
 // random xy coordinates generator for treasure char
-std::pair<GLfloat, GLfloat> createRandomCoordinates(std::vector<Rectangle> mazeWalls, Rectangle charRect) {
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<GLfloat> distribution(-5.0f, 5.0f);
-
+std::pair<GLfloat, GLfloat> createRandomCoordinates() {
     GLfloat min_x, min_y, max_x, max_y;
     double min_x_decimal, min_y_decimal, max_x_decimal, max_y_decimal;
     bool collision;
+    
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<GLfloat> distribution(-5.0f, 5.0f);
 
     do {
         min_x = round(distribution(gen)*100)/100; // random min_x
@@ -343,8 +351,8 @@ std::pair<GLfloat, GLfloat> createRandomCoordinates(std::vector<Rectangle> mazeW
         // cout << "max x: " << max_x << "\t";
         // cout << "max y: " << max_y << "\n";
 
-        // vertex data of treasure
-        GLfloat treasure_vertex_buffer_data[] = {
+        // new vertex data of treasure
+        GLfloat new_treasure_vertex_buffer_data[] = {
             // Bottom face(laying on xy-plane as z=0.0f)
             min_x, max_y, 0.0f,
             min_x, min_y, 0.0f,
@@ -359,7 +367,7 @@ std::pair<GLfloat, GLfloat> createRandomCoordinates(std::vector<Rectangle> mazeW
         };
 
         // create collision box for the treasure
-        Rectangle treasureRect = createRectangle(treasure_vertex_buffer_data, 0);
+        treasureRect = createRectangle(new_treasure_vertex_buffer_data, 0);
 
         collision = false; // reset collision flag
         // check for collision with walls
@@ -369,19 +377,43 @@ std::pair<GLfloat, GLfloat> createRandomCoordinates(std::vector<Rectangle> mazeW
                 break;
             }
         }
-        
+
         // check for collision with character
         if (checkRectCollision(charRect, treasureRect)) {
-                collision = true;
+            collision = true;
         }
-
     } while(collision);
 
     return std::make_pair(min_x,min_y);
 }
 
-void updateTreasurePosition(std::vector<Rectangle> mazeWalls, Rectangle charRect, std::pair<GLfloat, GLfloat> treasure_xy) {
-    treasure_xy = createRandomCoordinates(mazeWalls, charRect);
+void updateTreasurePosition(GLfloat* treasure_vertex_buffer_data) {
+    std::pair<GLfloat, GLfloat> treasure_xy = createRandomCoordinates();
+
+    GLfloat min_x = treasure_xy.first;
+    GLfloat min_y = treasure_xy.second;
+    GLfloat max_x = min_x + 0.8f;
+    GLfloat max_y = min_y + 0.8f;
+
+    GLfloat new_treasure_vertex_buffer_data[] = {
+        // Bottom face(laying on xy-plane as z=0.0f)
+        min_x, max_y, 0.0f,
+        min_x, min_y, 0.0f,
+        max_x, max_y, 0.0f,
+        max_x, min_y, 0.0f,
+
+        // Top face(z=0.8f)
+        min_x, max_y, 0.8f,
+        min_x, min_y, 0.8f,
+        max_x, max_y, 0.8f,
+        max_x, min_y, 0.8f,
+    };
+
+    for(int i = 0; i < 24; i++) {
+        treasure_vertex_buffer_data[i] = new_treasure_vertex_buffer_data[i];
+    }
+
+    return;
 }
 
 /**********************************************************************************/
@@ -789,7 +821,7 @@ int main(void)
     
     // Create bounding boxes for the maze walls
     // will be used for collision detection later on
-    std::vector<Rectangle> mazeWalls = {
+    mazeWalls = {
         createRectangle(maze_vertex_buffer_data, 0),
         createRectangle(maze_vertex_buffer_data, 24),
         createRectangle(maze_vertex_buffer_data, 48),
@@ -850,10 +882,10 @@ int main(void)
     
     // Create bounding box for character
     // will be used for collision detection later on
-    Rectangle charRect = createRectangle(char_vertex_buffer_data,0);
+    charRect = createRectangle(char_vertex_buffer_data,0);
 
     // call createRandomCoordinates to create the treasure's coordinates
-    std::pair<GLfloat, GLfloat> treasure_xy = createRandomCoordinates(mazeWalls, charRect);
+    std::pair<GLfloat, GLfloat> treasure_xy = createRandomCoordinates();
     GLfloat min_x = treasure_xy.first;
     GLfloat min_y = treasure_xy.second;
     GLfloat max_x = min_x + 0.8f;
@@ -1143,7 +1175,7 @@ int main(void)
     // setup treasure
     glBindVertexArray(treasureVAO);
     glBindBuffer(GL_ARRAY_BUFFER, treasurevertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data, GL_STATIC_DRAW); // GL_STATIC_DRAW makes buffer immutable
+	glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, treasureEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(treasure_indices), treasure_indices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -1181,27 +1213,30 @@ int main(void)
         glBindVertexArray(mazeVAO);
         glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
 
-        // draw treasure
-        glBindVertexArray(treasureVAO);
-        // NEED TO FIX THIS
-        //// Update cube position periodically
-        // static auto lastTime = std::chrono::steady_clock::now();
-        // auto currentTime = std::chrono::steady_clock::now();
-        // std::chrono::duration<float> elapsedTime = currentTime - lastTime;
-        // if(elapsedTime.count() > 1.0f) {
-        //     // Update every second
-        //     updateTreasurePosition(mazeWalls, charRect, treasure_xy);
-        //     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
-        //     lastTime = currentTime;
-        //     printf("%f",elapsedTime.count());
-        // }
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
         // draw character + movement
         glBindVertexArray(charVAO);
         glBindBuffer(GL_ARRAY_BUFFER, charvertexbuffer);
-        processInput(char_vertex_buffer_data, mazeWalls, charRect);
+        processInput(char_vertex_buffer_data);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(char_vertex_buffer_data), char_vertex_buffer_data);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+        // draw treasure
+        glBindVertexArray(treasureVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, treasurevertexbuffer);
+        static auto lastTime = std::chrono::steady_clock::now();
+        auto currentTime = std::chrono::steady_clock::now();
+        std::chrono::duration<float> elapsedTime = currentTime - lastTime;
+        // update treasure's pos every 5 seconds and only if character hasn't touched the treasure
+        if(elapsedTime.count() > 5.0f && !checkRectCollision(charRect, treasureRect)) {
+            updateTreasurePosition(treasure_vertex_buffer_data);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
+            lastTime = currentTime;
+        }else if(checkRectCollision(charRect, treasureRect)) {
+            /* CALL A FUNC HERE to gradually shrink treasure and then reappear it somewhere*/ 
+            updateTreasurePosition(treasure_vertex_buffer_data);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
+            lastTime = currentTime;
+        }
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 		// Swap buffers
