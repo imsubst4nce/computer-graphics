@@ -21,6 +21,11 @@
 #include <algorithm>
 #include <sstream>
 #include <chrono>
+#include <thread>
+
+// stb_image to load images
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 // Include GLEW
 #include <GL/glew.h>
@@ -77,7 +82,7 @@ void camera_function() {
     } else if ((glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)) {
         pan_y -= 0.01f; // pan downwards
     }
-    
+
     return;
 }
 
@@ -178,9 +183,9 @@ struct Rectangle {
     GLfloat minX, maxX, minY, maxY;
 };
 
-// some rectangle definitions
-Rectangle charRect, treasureRect;
+// global rectangle definitions
 std::vector<Rectangle> mazeWalls;
+Rectangle charRect, treasureRect;
 
 // function that creates a rectangle from vertex data
 Rectangle createRectangle(GLfloat* vertices, int startIdx) {
@@ -220,7 +225,9 @@ bool checkIfSurpassedStart(Rectangle character) {
 // checking for key press and updating the coordinates of the moveable character
 void processInput(GLfloat *char_vertex_buffer_data) {
     GLfloat moveX, moveY = 0.0f;
-    GLfloat new_char_vertex_buffer_data[] = { // temporary array with character coordinates so we don't directly update the original
+
+    // temporary array with character coordinates so we don't directly update the original
+    GLfloat new_char_vertex_buffer_data[] = { 
         // Bottom face(laying on xy-plane as z=0.25f)
         0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f,
@@ -233,7 +240,8 @@ void processInput(GLfloat *char_vertex_buffer_data) {
         0.0f, 0.0f, 0.50f,
         0.0f, 0.0f, 0.50f,
     };
-    GLfloat char_start_vertex_buffer_data[] = { // maze start character coordinates
+    // maze start character coordinates
+    GLfloat char_start_vertex_buffer_data[] = { 
         // Bottom face(laying on xy-plane as z=0.0f)
         -4.75f, 2.5f, 0.0f,
         -4.75f, 2.0f, 0.0f,
@@ -246,7 +254,8 @@ void processInput(GLfloat *char_vertex_buffer_data) {
         -4.25f, 2.5f, 0.50f,
         -4.25f, 2.0f, 0.50f,
     };
-    GLfloat char_end_vertex_buffer_data[] = { // maze end character coordinates
+    // maze end character coordinates
+    GLfloat char_end_vertex_buffer_data[] = { 
         // Bottom face(laying on xy-plane as z=0.0f)
         4.25f, -2.0f, 0.0f,
         4.25f, -2.5f, 0.0f,
@@ -260,6 +269,7 @@ void processInput(GLfloat *char_vertex_buffer_data) {
         4.75f, -2.5f, 0.50f,
     };
 
+    // check for key press
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
         moveY = 0.002f;
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
@@ -382,6 +392,7 @@ std::pair<GLfloat, GLfloat> createRandomCoordinates() {
         if (checkRectCollision(charRect, treasureRect)) {
             collision = true;
         }
+
     } while(collision);
 
     return std::make_pair(min_x,min_y);
@@ -396,31 +407,66 @@ void updateTreasurePosition(GLfloat* treasure_vertex_buffer_data) {
     GLfloat max_y = min_y + 0.8f;
 
     GLfloat new_treasure_vertex_buffer_data[] = {
-        // Bottom face(laying on xy-plane as z=0.0f)
+        // Bottom face (z = 0.0f)
         min_x, max_y, 0.0f,
         min_x, min_y, 0.0f,
         max_x, max_y, 0.0f,
         max_x, min_y, 0.0f,
 
-        // Top face(z=0.8f)
+        // Top face (z = 0.8f)
         min_x, max_y, 0.8f,
         min_x, min_y, 0.8f,
         max_x, max_y, 0.8f,
         max_x, min_y, 0.8f,
+
+        // Back face (y = min_y)
+        min_x, min_y, 0.0f,
+        max_x, min_y, 0.0f,
+        min_x, min_y, 0.8f,
+        max_x, min_y, 0.8f,
+
+        // Front face (y = max_y)
+        min_x, max_y, 0.0f,
+        max_x, max_y, 0.0f,
+        min_x, max_y, 0.8f,
+        max_x, max_y, 0.8f,
+
+        // Left face (x = min_x)
+        min_x, min_y, 0.0f,
+        min_x, max_y, 0.0f,
+        min_x, min_y, 0.8f,
+        min_x, max_y, 0.8f,
+
+        // Right face (x = max_x)
+        max_x, min_y, 0.0f,
+        max_x, max_y, 0.0f,
+        max_x, min_y, 0.8f,
+        max_x, max_y, 0.8f,
     };
 
-    for(int i = 0; i < 24; i++) {
+    for(int i = 0; i < 72; i+=3) {
         treasure_vertex_buffer_data[i] = new_treasure_vertex_buffer_data[i];
+        treasure_vertex_buffer_data[i+1] = new_treasure_vertex_buffer_data[i+1];
     }
 
     return;
 }
 
+// void shrinkTreasure(GLfloat* treasure_vertex_buffer_data) {
+//     int countDown = 96;
+//     do {
+//         for(int i = 0; i < 24; i++) {
+//             treasure_vertex_buffer_data[i] -= 0.01f;
+//         }
+//         countDown-=1;
+//     } while(countDown>0);
+//     return;
+// }
+
 /**********************************************************************************/
 /**********************************************************************************/
 
-int main(void)
-{
+int main(void) {
 	if (!glfwInit())
 	{
 		fprintf(stderr, "Failed to initialize GLFW\n");
@@ -471,7 +517,7 @@ int main(void)
     /**********************************************************************************/
     /**********************************************************************************/
 
-    // amount of vetrices(every triangle has 3)
+    // total number of vetrices(every triangle has 3)
     int number_of_maze_vertices = 576; // 192 triangles * 3 vertices
 
     // vertex data of maze
@@ -891,45 +937,106 @@ int main(void)
     GLfloat max_x = min_x + 0.8f;
     GLfloat max_y = min_y + 0.8f;
 
-    // vertex data of treasure
     GLfloat treasure_vertex_buffer_data[] = {
-        // Bottom face(laying on xy-plane as z=0.0f)
+        // Bottom face (z = 0.0f)
         min_x, max_y, 0.0f,
         min_x, min_y, 0.0f,
         max_x, max_y, 0.0f,
         max_x, min_y, 0.0f,
 
-        // Top face(z=0.8f)
+        // Top face (z = 0.8f)
         min_x, max_y, 0.8f,
         min_x, min_y, 0.8f,
         max_x, max_y, 0.8f,
         max_x, min_y, 0.8f,
+
+        // Back face (y = min_y)
+        min_x, min_y, 0.0f,
+        max_x, min_y, 0.0f,
+        min_x, min_y, 0.8f,
+        max_x, min_y, 0.8f,
+
+        // Front face (y = max_y)
+        min_x, max_y, 0.0f,
+        max_x, max_y, 0.0f,
+        min_x, max_y, 0.8f,
+        max_x, max_y, 0.8f,
+
+        // Left face (x = min_x)
+        min_x, min_y, 0.0f,
+        min_x, max_y, 0.0f,
+        min_x, min_y, 0.8f,
+        min_x, max_y, 0.8f,
+
+        // Right face (x = max_x)
+        max_x, min_y, 0.0f,
+        max_x, max_y, 0.0f,
+        max_x, min_y, 0.8f,
+        max_x, max_y, 0.8f,
+    };
+    GLfloat treasure_uv_coords[] = {
+        // Bottom face
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 1.0f,
+        1.0f, 0.0f,
+
+        // Top face
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 1.0f,
+        1.0f, 0.0f,
+
+        // Back face
+        0.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+
+        // Front face
+        0.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+
+        // Left face
+        0.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+
+        // Right face
+        0.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
     };
     unsigned int treasure_indices[] = {
-        // bottom face
+        // Bottom face
         0, 1, 2,
-        1, 2, 3,
+        1, 3, 2,
 
-        // top face
+        // Top face
         4, 5, 6,
-        5, 6, 7,
+        5, 7, 6,
 
-        // back face
-        1, 3, 5,
-        3, 5, 7,
+        // Back face
+        8, 9, 10,
+        9, 11, 10,
 
-        // front face
-        0, 2, 4,
-        2, 4, 6,
+        // Front face
+        12, 13, 14,
+        13, 15, 14,
 
-        // left face
-        0, 1, 4,
-        1, 4, 5,
+        // Left face
+        16, 17, 18,
+        17, 19, 18,
 
-        // right face
-        2, 3, 6,
-        3, 6, 7,
+        // Right face
+        20, 21, 22,
+        21, 23, 22
     };
+
     
     // color data of maze and character
     GLfloat a = 0.8f;
@@ -1107,25 +1214,12 @@ int main(void)
         0.85f, 0.75f, 0.0f, a,
         0.85f, 0.75f, 0.0f, a,
     };
-    static const GLfloat treasure_color[] = {
-        // Top face (Bright)
-        0.6f, 0.5f, 0.3f, a,
-        0.6f, 0.5f, 0.3f, a,
-        0.6f, 0.5f, 0.3f, a,
-        0.6f, 0.5f, 0.3f, a,
-
-        // Bottom face (Dark)
-        0.45f, 0.75f, 0.1f, a,
-        0.45f, 0.75f, 0.1f, a,
-        0.45f, 0.75f, 0.1f, a,
-        0.45f, 0.75f, 0.1f, a,
-    };
 
     // init vao, ebo, buffers for character and maze
     GLuint mazevertexbuffer, mazeVAO, mazecolorbuffer;
     GLuint charvertexbuffer, charVAO, charcolorbuffer;
-    GLuint treasurevertexbuffer, treasureVAO, treasurecolorbuffer;
-    unsigned int mazeEBO, charEBO, treasureEBO;
+    GLuint treasurevertexbuffer, treasureVAO, treasureUVbuffer;
+    unsigned int mazeEBO, charEBO, treasureEBO, treasureTex;
 
     glGenVertexArrays(1, &charVAO);
     glGenVertexArrays(1, &mazeVAO);
@@ -1133,12 +1227,13 @@ int main(void)
     glGenBuffers(1, &charvertexbuffer);
     glGenBuffers(1, &mazevertexbuffer);
     glGenBuffers(1, &treasurevertexbuffer);
+    glGenBuffers(1, &treasureUVbuffer);
     glGenBuffers(1, &charcolorbuffer);
     glGenBuffers(1, &mazecolorbuffer);
-    glGenBuffers(1, &treasurecolorbuffer);
     glGenBuffers(1, &charEBO);
     glGenBuffers(1, &mazeEBO);
     glGenBuffers(1, &treasureEBO);
+    glGenTextures(1, &treasureTex);
 
     // setup maze
     glBindVertexArray(mazeVAO);
@@ -1176,16 +1271,38 @@ int main(void)
     glBindVertexArray(treasureVAO);
     glBindBuffer(GL_ARRAY_BUFFER, treasurevertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data, GL_DYNAMIC_DRAW);
+        // setup element buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, treasureEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(treasure_indices), treasure_indices, GL_STATIC_DRAW);
+        // setup treasure position attr
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+        // setup UV buffer
+    glBindBuffer(GL_ARRAY_BUFFER, treasureUVbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_uv_coords), treasure_uv_coords, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(2);
 
-    // setup treasure color
-    glBindBuffer(GL_ARRAY_BUFFER, treasurecolorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_color), treasure_color, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(1);
+    // Unbind the VAO to prevent accidental modification
+    glBindVertexArray(0);
+    
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, treasureTex);
+    glUniform1i(glGetUniformLocation(programID, "ourTexture"), 0);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // load image for texture
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load("coins.jpg", &width, &height, &nrChannels, 0);
+    if(data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    stbi_image_free(data); 
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: shows polygons
 
@@ -1209,6 +1326,8 @@ int main(void)
         // call camera_function to check for camera movement
         camera_function();
 
+        glUniform1i(glGetUniformLocation(programID, "useTexture"), false);
+        
         // draw maze
         glBindVertexArray(mazeVAO);
         glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
@@ -1221,28 +1340,37 @@ int main(void)
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         // draw treasure
+        glUniform1i(glGetUniformLocation(programID, "useTexture"), true);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, treasureTex);
+        glUniform1i(glGetUniformLocation(programID, "ourTexture"), 0);
         glBindVertexArray(treasureVAO);
         glBindBuffer(GL_ARRAY_BUFFER, treasurevertexbuffer);
+
         static auto lastTime = std::chrono::steady_clock::now();
         auto currentTime = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsedTime = currentTime - lastTime;
+        
         // update treasure's pos every 5 seconds and only if character hasn't touched the treasure
-        if(elapsedTime.count() > 5.0f && !checkRectCollision(charRect, treasureRect)) {
+        if(elapsedTime.count() > 7.0f && !checkRectCollision(charRect, treasureRect)) {
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
             lastTime = currentTime;
         }else if(checkRectCollision(charRect, treasureRect)) {
-            /* CALL A FUNC HERE to gradually shrink treasure and then reappear it somewhere*/ 
+            // shrinkTreasure(treasure_vertex_buffer_data);
+            // std::this_thread::sleep_for(std::chrono::milliseconds(300));
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
             lastTime = currentTime;
         }
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
+        // unbind vao
+        glBindVertexArray(0);
+
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
 	} // Check if the SPACE key was pressed or the window was closed
     while (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
