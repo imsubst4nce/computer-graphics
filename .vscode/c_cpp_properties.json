@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "C:\\GL\\GLM",
                 "C:\\GL\\GLEWbin\\include",
-                "C:\\GL\\GLFWx64\\include"
+                "C:\\GL\\GLFWx64\\include",
+                "C:\\GL\\SFML\\include",
             ],
             "defines": [
                 "_DEBUG",

@@ -25,7 +25,7 @@
 
 // stb_image to load images
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "headers/stb_image.h"
 
 // Include GLEW
 #include <GL/glew.h>
@@ -33,6 +33,9 @@
 // Include GLFW
 #include <GLFW/glfw3.h>
 GLFWwindow* window;
+
+// Include SFML for audio effects
+// #include <SFML/Audio.hpp>
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -463,6 +466,18 @@ void updateTreasurePosition(GLfloat* treasure_vertex_buffer_data) {
 //     return;
 // }
 
+const char* selectRandomTexture() {
+    const char *images[] = {"textures/coins.jpg","textures/green_gold.jpg","textures/wood.jpg"};
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> distr(0, 2);
+    
+    int choiceIndex = distr(gen); // random choice
+
+    return images[choiceIndex]; // return the image path
+}
+
 /**********************************************************************************/
 /**********************************************************************************/
 
@@ -513,6 +528,15 @@ int main(void) {
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
     glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
+
+    // Load and play background music
+    // sf::Music backgroundMusic;
+    // if (!backgroundMusic.openFromFile("sounds/breakout.mp3")) {
+    //     std::cerr << "Error loading background music!" << std::endl;
+    //     return -1;
+    // }
+    // backgroundMusic.setLoop(true); // Loop the music
+    // backgroundMusic.play();
 
     /**********************************************************************************/
     /**********************************************************************************/
@@ -1297,12 +1321,13 @@ int main(void) {
 
     // load image for texture
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("coins.jpg", &width, &height, &nrChannels, 0);
+    char nextTexture[] = "textures/coins.jpg";
+    unsigned char *data = stbi_load(nextTexture, &width, &height, &nrChannels, 0);
     if(data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
-    stbi_image_free(data); 
+    stbi_image_free(data);
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: shows polygons
 
@@ -1355,12 +1380,28 @@ int main(void) {
         if(elapsedTime.count() > 7.0f && !checkRectCollision(charRect, treasureRect)) {
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
+            
+            data = stbi_load(selectRandomTexture(), &width, &height, &nrChannels, 0);
+            if(data) {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+            }
+            stbi_image_free(data);
+            
             lastTime = currentTime;
         }else if(checkRectCollision(charRect, treasureRect)) {
             // shrinkTreasure(treasure_vertex_buffer_data);
             // std::this_thread::sleep_for(std::chrono::milliseconds(300));
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
+            
+            data = stbi_load(selectRandomTexture(), &width, &height, &nrChannels, 0);
+            if(data) {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+                glGenerateMipmap(GL_TEXTURE_2D);
+            }
+            stbi_image_free(data);
+            
             lastTime = currentTime;
         }
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
