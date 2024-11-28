@@ -11,4 +11,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="P1CFragmentShader.fragmentshader">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="P1CVertexShader.vertexshader">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

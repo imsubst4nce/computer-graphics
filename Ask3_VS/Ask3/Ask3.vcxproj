@@ -136,6 +136,10 @@
   <ItemGroup>
     <ClCompile Include="Source-1C.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="P1CFragmentShader.fragmentshader" />
+    <None Include="P1CVertexShader.vertexshader" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

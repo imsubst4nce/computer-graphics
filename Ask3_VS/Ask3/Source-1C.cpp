@@ -50,6 +50,16 @@ GLFWwindow* window;
 using namespace glm;
 using namespace std;
 
+/* structs */
+// struct to describe collision rectangles
+struct Rectangle {
+    GLfloat minX, maxX, minY, maxY;
+};
+
+/* globals */
+// global rectangle variables
+std::vector<Rectangle> mazeWalls;
+Rectangle charRect, treasureRect;
 // βοηθητικές μεταβλητές που θα κρατάνε τις συντεταγμένες
 // επειδή θέλουμε κίνηση στους άξονες xyz(x, y και zoom)
 float cam_x = 0.0f;
@@ -102,7 +112,6 @@ void camera_function() {
 }
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
-
     // Create the shaders
     GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
     GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -118,7 +127,6 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
     }
     else {
         printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
-        getchar();
         return 0;
     }
 
@@ -193,14 +201,22 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 /**********************************************************************************/
 /**********************************************************************************/
 
-// struct to describe collision rectangles
-struct Rectangle {
-    GLfloat minX, maxX, minY, maxY;
-};
+/* render functions */
+void renderMaze(GLuint& mazeVAO) {
+    glBindVertexArray(mazeVAO);
+    glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
 
-// global rectangle definitions
-std::vector<Rectangle> mazeWalls;
-Rectangle charRect, treasureRect;
+    return;
+}
+
+void renderTreasure(GLuint& treasureVAO) {
+    glBindVertexArray(treasureVAO);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); // Assuming 36 indices for a cube
+    glBindVertexArray(0);
+
+    return;
+}
 
 // function that creates a rectangle from vertex data
 Rectangle createRectangle(GLfloat* vertices, int startIdx) {
@@ -370,12 +386,6 @@ std::pair<GLfloat, GLfloat> createRandomCoordinates() {
         max_x = min_x + 0.8f;
         max_y = min_y + 0.8f;
 
-        // test to see if the coords are correct
-        // cout << "min x: " << min_x << "\t";
-        // cout << "min y: " << min_y << "\n";
-        // cout << "max x: " << max_x << "\t";
-        // cout << "max y: " << max_y << "\n";
-
         // new vertex data of treasure
         GLfloat new_treasure_vertex_buffer_data[] = {
             // Bottom face(laying on xy-plane as z=0.0f)
@@ -465,19 +475,33 @@ void updateTreasurePosition(GLfloat* treasure_vertex_buffer_data) {
     }
 
     SoundEngine->play2D("sounds/appearence.wav");
+
     return;
 }
 
-// void shrinkTreasure(GLfloat* treasure_vertex_buffer_data) {
-//     int countDown = 96;
-//     do {
-//         for(int i = 0; i < 24; i++) {
-//             treasure_vertex_buffer_data[i] -= 0.01f;
-//         }
-//         countDown-=1;
-//     } while(countDown>0);
-//     return;
-// }
+void shrinkTreasure(glm::mat4& MVP, GLuint programID, GLuint treasureVAO) {
+    glUseProgram(programID);
+    unsigned int transformLoc = glGetUniformLocation(programID, "MVP");
+
+    for (float s = 1.0f; s > 0.5f; s -= 0.01f) {
+        glm::mat4 scaledMVP = MVP;
+        //scaledMVP = glm::rotate(scaledMVP, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        scaledMVP = glm::scale(scaledMVP, glm::vec3(s, s, s));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(scaledMVP));
+
+        renderTreasure(treasureVAO);
+
+        // Swap buffers and poll events
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // smooth scaling effect
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500)); // seperate delay to seperate sounds/other actions
+
+    return;
+}
 
 const char* selectRandomTexture() {
     const char* images[] = { "textures/coins.jpg","textures/green_gold.jpg","textures/wood.jpg" };
@@ -498,7 +522,6 @@ int main(void) {
     if (!glfwInit())
     {
         fprintf(stderr, "Failed to initialize GLFW\n");
-        getchar();
         return -1;
     }
 
@@ -512,7 +535,6 @@ int main(void) {
 
     if (window == NULL) {
         fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
-        getchar();
         glfwTerminate();
         return -1;
     }
@@ -522,7 +544,6 @@ int main(void) {
     glewExperimental = true;
     if (glewInit() != GLEW_OK) {
         fprintf(stderr, "Failed to initialize GLEW\n");
-        getchar();
         glfwTerminate();
         return -1;
     }
@@ -1072,7 +1093,6 @@ int main(void) {
         21, 23, 22
     };
 
-
     // color data of maze and character
     GLfloat a = 0.8f;
     static const GLfloat maze_color[] = {
@@ -1349,7 +1369,7 @@ int main(void) {
         // Use our shader
         glUseProgram(programID);
 
-        // Camera matrix
+        // setting up camera
         glm::mat4 View = glm::lookAt(
             glm::vec3(cam_x, cam_y, cam_z), // cam position coordinates
             glm::vec3(pan_x, pan_y, 0.25f),
@@ -1365,8 +1385,7 @@ int main(void) {
         glUniform1i(glGetUniformLocation(programID, "useTexture"), false);
 
         // draw maze
-        glBindVertexArray(mazeVAO);
-        glDrawElements(GL_TRIANGLES, 576, GL_UNSIGNED_INT, 0);
+        renderMaze(mazeVAO);
 
         // draw character + movement
         glBindVertexArray(charVAO);
@@ -1387,8 +1406,8 @@ int main(void) {
         auto currentTime = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsedTime = currentTime - lastTime;
 
-        // update treasure's pos every 5 seconds and only if character hasn't touched the treasure
-        if (elapsedTime.count() > 6.0f && !checkRectCollision(charRect, treasureRect)) {
+        // update treasure's pos every 7 seconds and only if character hasn't touched the treasure
+        if (elapsedTime.count() > 7.0f && !checkRectCollision(charRect, treasureRect)) {
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
 
@@ -1403,11 +1422,10 @@ int main(void) {
         }
         else if (checkRectCollision(charRect, treasureRect)) {
             SoundEngine->play2D("sounds/impact.mp3");
-            // shrinkTreasure(treasure_vertex_buffer_data);
-            std::this_thread::sleep_for(std::chrono::milliseconds(600)); // a short delay to seperate sounds
+            shrinkTreasure(MVP, programID, treasureVAO);
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
-
+            
             data = stbi_load(selectRandomTexture(), &width, &height, &nrChannels, 0);
             if (data) {
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);

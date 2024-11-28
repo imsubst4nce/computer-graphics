@@ -5,6 +5,14 @@
     {
       "AbsoluteMoniker": "D:0:0:{FE55DD57-CC9C-4491-B773-EC9E23FC6613}|Ask3.vcxproj|C:\\GLP\\Projects\\Ask3_VS\\Ask3\\Source-1C.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{FE55DD57-CC9C-4491-B773-EC9E23FC6613}|Ask3.vcxproj|solutionrelative:Source-1C.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FE55DD57-CC9C-4491-B773-EC9E23FC6613}|Ask3.vcxproj|C:\\GLP\\Projects\\Ask3_VS\\Ask3\\P1CVertexShader.vertexshader||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{FE55DD57-CC9C-4491-B773-EC9E23FC6613}|Ask3.vcxproj|solutionrelative:P1CVertexShader.vertexshader||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FE55DD57-CC9C-4491-B773-EC9E23FC6613}|Ask3.vcxproj|C:\\GLP\\Projects\\Ask3_VS\\Ask3\\P1CFragmentShader.fragmentshader||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{FE55DD57-CC9C-4491-B773-EC9E23FC6613}|Ask3.vcxproj|solutionrelative:P1CFragmentShader.fragmentshader||{8B382828-6202-11D1-8870-0000F87579D2}"
     }
   ],
   "DocumentGroupContainers": [
@@ -24,9 +32,34 @@
               "RelativeDocumentMoniker": "Source-1C.cpp",
               "ToolTip": "C:\\GLP\\Projects\\Ask3_VS\\Ask3\\Source-1C.cpp",
               "RelativeToolTip": "Source-1C.cpp",
-              "ViewState": "AgIAAHgFAAAAAAAAAAA2wHYFAAANAAAAAAAAAA==",
+              "ViewState": "AgIAAJIFAAAAAAAAAAAawKQFAAAZAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-11-26T12:57:17.891Z",
+              "WhenOpened": "2024-11-28T09:28:56.513Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "P1CFragmentShader.fragmentshader",
+              "DocumentMoniker": "C:\\GLP\\Projects\\Ask3_VS\\Ask3\\P1CFragmentShader.fragmentshader",
+              "RelativeDocumentMoniker": "P1CFragmentShader.fragmentshader",
+              "ToolTip": "C:\\GLP\\Projects\\Ask3_VS\\Ask3\\P1CFragmentShader.fragmentshader",
+              "RelativeToolTip": "P1CFragmentShader.fragmentshader",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-11-27T15:38:59.619Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "P1CVertexShader.vertexshader",
+              "DocumentMoniker": "C:\\GLP\\Projects\\Ask3_VS\\Ask3\\P1CVertexShader.vertexshader",
+              "RelativeDocumentMoniker": "P1CVertexShader.vertexshader",
+              "ToolTip": "C:\\GLP\\Projects\\Ask3_VS\\Ask3\\P1CVertexShader.vertexshader",
+              "RelativeToolTip": "P1CVertexShader.vertexshader",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-11-27T15:19:38.204Z",
               "EditorCaption": ""
             }
           ]
