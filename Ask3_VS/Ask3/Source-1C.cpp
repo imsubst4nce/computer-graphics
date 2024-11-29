@@ -31,14 +31,11 @@
 #include <irrKlang.h>
 using namespace irrklang;
 
-irrklang::ISoundEngine* SoundEngine = createIrrKlangDevice();
-
 // Include GLEW
 #include <GL/glew.h>
 
 // Include GLFW
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
 
 // Include SFML for audio effects
 //#include <SFML/Audio.hpp>
@@ -51,64 +48,31 @@ using namespace glm;
 using namespace std;
 
 /* structs */
-// struct to describe collision rectangles
+
 struct Rectangle {
     GLfloat minX, maxX, minY, maxY;
 };
 
 /* globals */
+
+GLFWwindow* window; // window
+irrklang::ISoundEngine* SoundEngine = createIrrKlangDevice(); // SoundEngine
+
 // global rectangle variables
 std::vector<Rectangle> mazeWalls;
 Rectangle charRect, treasureRect;
-// βοηθητικές μεταβλητές που θα κρατάνε τις συντεταγμένες
-// επειδή θέλουμε κίνηση στους άξονες xyz(x, y και zoom)
+
+// globals for camera movement/panning
 float cam_x = 0.0f;
 float cam_y = 0.0f;
 float cam_z = 20.0f;
 float pan_x = 0.0f;
 float pan_y = 0.0f;
 
-// camera function for applying camera movement
-// W/X -> changing x coordinate
-// Q/Z -> changing y coordinate
-// =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
-void camera_function() {
-    // move around x
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        cam_x += 0.01f;
-    }
-    else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
-        cam_x -= 0.01f;
-    }
-    // move around y
-    else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        cam_y += 0.01f;
-    }
-    else if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-        cam_y -= 0.01f;
-    }
-    // zoom in/out
-    else if ((glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)) {
-        cam_z += 0.01f; // incrementing z coord moves the camera further away from the maze
-    }
-    else if ((glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)) {
-        cam_z -= 0.01f; // decrementing the z coord moves the camera closer to the maze
-    }
-    // xy panning
-    else if ((glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)) {
-        pan_x -= 0.01f; // pan to the left
-    }
-    else if ((glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)) {
-        pan_x += 0.01f; // pan to the right
-    }
-    else if ((glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)) {
-        pan_y += 0.01f; // pan upwards
-    }
-    else if ((glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)) {
-        pan_y -= 0.01f; // pan downwards
-    }
 
-    return;
+/* utility functions */
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
 }
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
@@ -201,6 +165,49 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 /**********************************************************************************/
 /**********************************************************************************/
 
+// camera function for applying camera movement
+// W/X -> changing x coordinate
+// Q/Z -> changing y coordinate
+// =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
+void camera_function() {
+    // move around x
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        cam_x += 0.01f;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+        cam_x -= 0.01f;
+    }
+    // move around y
+    else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        cam_y += 0.01f;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+        cam_y -= 0.01f;
+    }
+    // zoom in/out
+    else if ((glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)) {
+        cam_z += 0.01f; // incrementing z coord moves the camera further away from the maze
+    }
+    else if ((glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)) {
+        cam_z -= 0.01f; // decrementing the z coord moves the camera closer to the maze
+    }
+    // xy panning
+    else if ((glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)) {
+        pan_x -= 0.01f; // pan to the left
+    }
+    else if ((glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)) {
+        pan_x += 0.01f; // pan to the right
+    }
+    else if ((glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)) {
+        pan_y += 0.01f; // pan upwards
+    }
+    else if ((glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)) {
+        pan_y -= 0.01f; // pan downwards
+    }
+
+    return;
+}
+
 /* render functions */
 void renderMaze(GLuint& mazeVAO) {
     glBindVertexArray(mazeVAO);
@@ -225,7 +232,7 @@ Rectangle createRectangle(GLfloat* vertices, int startIdx) {
     };
 };
 
-// check if two rectangles overlap/collide
+// collision checking function
 bool checkRectCollision(Rectangle border, Rectangle character) {
     return ((
         (character.minX <= -5.25f || character.maxX >= 4.75f) ||
@@ -252,7 +259,7 @@ bool checkIfSurpassedStart(Rectangle character) {
     return false;
 }
 
-// this function has all the movement logic
+// movement logic function
 // checking for key press and updating the coordinates of the moveable character
 void processInput(GLfloat* char_vertex_buffer_data) {
     GLfloat moveX = 0.0f, moveY = 0.0f;
@@ -479,26 +486,25 @@ void updateTreasurePosition(GLfloat* treasure_vertex_buffer_data) {
     return;
 }
 
-void shrinkTreasure(glm::mat4& MVP, GLuint programID, GLuint treasureVAO) {
+void shrinkTreasure(glm::mat4& Projection, glm::mat4& View, GLuint programID, GLuint treasureVAO) {
     glUseProgram(programID);
     unsigned int transformLoc = glGetUniformLocation(programID, "MVP");
 
     for (float s = 1.0f; s > 0.5f; s -= 0.01f) {
-        glm::mat4 scaledMVP = MVP;
-        //scaledMVP = glm::rotate(scaledMVP, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-        scaledMVP = glm::scale(scaledMVP, glm::vec3(s, s, s));
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(scaledMVP));
+        glm::mat4 Model = glm::mat4(1.0f);
+        Model = glm::scale(Model, glm::vec3(s, s, s));
+
+        glm::mat4 MVP = Projection * View * Model; // Recalculate MVP
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(MVP));
 
         renderTreasure(treasureVAO);
 
-        // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); // smooth scaling effect
     }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1500)); // seperate delay to seperate sounds/other actions
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // seperate delay to seperate sounds/other actions
 
     return;
 }
@@ -539,6 +545,7 @@ int main(void) {
         return -1;
     }
     glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // Initialize GLEW
     glewExperimental = true;
@@ -1407,7 +1414,7 @@ int main(void) {
         std::chrono::duration<float> elapsedTime = currentTime - lastTime;
 
         // update treasure's pos every 7 seconds and only if character hasn't touched the treasure
-        if (elapsedTime.count() > 7.0f && !checkRectCollision(charRect, treasureRect)) {
+        if (elapsedTime.count() > 7.0f) {
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
 
@@ -1419,10 +1426,9 @@ int main(void) {
             stbi_image_free(data);
 
             lastTime = currentTime;
-        }
-        else if (checkRectCollision(charRect, treasureRect)) {
+        } else if (checkRectCollision(charRect, treasureRect)) {
             SoundEngine->play2D("sounds/impact.mp3");
-            shrinkTreasure(MVP, programID, treasureVAO);
+            shrinkTreasure(Projection, View, programID, treasureVAO);
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
             
@@ -1435,6 +1441,9 @@ int main(void) {
             
             lastTime = currentTime;
         }
+
+        // Update treasure's MVP
+        // glUniformMatrix4fv(MatrixID, 1, GL_FALSE, glm::value_ptr(MVP));
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         // unbind vao
