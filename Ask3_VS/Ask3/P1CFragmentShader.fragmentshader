@@ -1,19 +1,49 @@
 #version 330 core
 in vec4 fragmentColor;
-in vec2 texCoord;
+in vec2 fragmentUV;
+in vec3 Position_worldspace;
+in vec3 Normal_cameraspace;
+in vec3 EyeDirection_cameraspace;
+in vec3 LightDirection_cameraspace;
 
+// final output
 out vec4 color;
 
+// uniforms
 uniform sampler2D ourTexture;
 uniform bool useTexture; // uniform to decide if texture should be used
+uniform mat4 MV;
+uniform vec3 LightPosition_worldspace;
 
 void main()
 {
-    vec4 texColor = texture(ourTexture, texCoord);
-    vec4 verColor = fragmentColor;
+    vec3 lightColor = vec3(1.0f,1.0f,1.0f);
+    vec3 lightPower = 50.0f;
+
+    //vec4 texColor = texture(ourTexture, fragmentUV);
+    //vec4 verColor = fragmentColor;
+    vec4 MaterialDiffuseColor = texture(ourTexture, fragmentUV);
+    vec4 MaterialAmbientColor = vec4(0.1f, 0.1f, 0.1f, 1.0f) * MaterialDiffuseColor;
+    vec4 MaterialSpecularColor = vec4(0.3f, 0.3f, 0.3f, 1.0f);
+
+    // Distance to the light
+    float distance = length(LightPositio_worldspace - Position_worldspace);
+
+    // Normal of the computed fragment in cameraspace
+    vec3 n = normalize(Normal_cameraspace);
+    vec3 l = normalize(LightDirection_cameraspace);
+    float cosTheta = clamp(dot(n,l), 0, 1);
+
+    vec3 E = normalize(EyeDirection_cameraspace);
+    vec3 R = reflect(-l,n);
+    float cosAlpha = clamp(dot(E,R), 0, 1);
 
     if (useTexture) {
-        color = mix(verColor, texColor, texColor.a);
+        //color = mix(verColor, texColor, texColor.a);
+        color = 
+                MaterialAmbientColor +
+                MaterialDiffuseColor * LightColor * LightPower * cosTheta/(distance*distance) +
+                MaterialSpecularColor * LightColor * LightPower * pow(cosAlpha,5) / (distance*distance);
     } else {
         color = verColor;
     }

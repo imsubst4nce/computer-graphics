@@ -69,6 +69,10 @@ float cam_z = 20.0f;
 float pan_x = 0.0f;
 float pan_y = 0.0f;
 
+// globals for camera movement/panning
+float lsource_x = 10.0f;
+float lsource_y = 8.0f;
+float lsource_z = 4.0f;
 
 /* utility functions */
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -168,6 +172,7 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 // camera function for applying camera movement
 // W/X -> changing x coordinate
 // Q/Z -> changing y coordinate
+// T/B -> xy panning
 // =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
 void camera_function() {
     // move around x
@@ -205,6 +210,36 @@ void camera_function() {
         pan_y -= 0.01f; // pan downwards
     }
 
+    return;
+}
+
+// light function for applying light source movement
+// W/X -> changing x coordinate
+// Q/Z -> changing y coordinate
+// =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
+void light_function() {
+    // move around x
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        lsource_x += 0.01f;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+        lsource_x -= 0.01f;
+    }
+    // move around y
+    else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        lsource_y += 0.01f;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+        lsource_y -= 0.01f;
+    }
+    // zoom in/out
+    else if ((glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)) {
+        lsource_z += 0.01f; // incrementing z coord moves the camera further away from the maze
+    }
+    else if ((glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)) {
+        lsource_z -= 0.01f; // decrementing the z coord moves the camera closer to the maze
+    }
+    
     return;
 }
 
@@ -567,6 +602,7 @@ int main(void) {
     GLuint programID = LoadShaders("P1CVertexShader.vertexshader", "P1CFragmentShader.fragmentshader");
 
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+    GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
     glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
 
@@ -1281,6 +1317,7 @@ int main(void) {
     GLuint mazevertexbuffer, mazeVAO, mazecolorbuffer;
     GLuint charvertexbuffer, charVAO, charcolorbuffer;
     GLuint treasurevertexbuffer, treasureVAO, treasureUVbuffer;
+    GLuint normalbuffer;
     unsigned int mazeEBO, charEBO, treasureEBO, treasureTex;
 
     glGenVertexArrays(1, &charVAO);
@@ -1295,6 +1332,7 @@ int main(void) {
     glGenBuffers(1, &charEBO);
     glGenBuffers(1, &mazeEBO);
     glGenBuffers(1, &treasureEBO);
+    glGenBuffers(1, &normalbuffer);
     glGenTextures(1, &treasureTex);
 
     // setup maze
@@ -1345,6 +1383,12 @@ int main(void) {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(2);
 
+    // setup normal buffer
+    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(3);
+
     // Unbind the VAO to prevent accidental modification
     glBindVertexArray(0);
 
@@ -1376,6 +1420,9 @@ int main(void) {
         // Use our shader
         glUseProgram(programID);
 
+        // call camera_function to check for camera movement
+        camera_function();
+
         // setting up camera
         glm::mat4 View = glm::lookAt(
             glm::vec3(cam_x, cam_y, cam_z), // cam position coordinates
@@ -1385,9 +1432,11 @@ int main(void) {
         glm::mat4 Model = glm::mat4(1.0f);
         glm::mat4 MVP = Projection * View * Model;
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+        glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-        // call camera_function to check for camera movement
-        camera_function();
+        glm::vec3 lightPos = glm::vec3(lsource_x, lsource_y, lsource_z);
+        glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
         glUniform1i(glGetUniformLocation(programID, "useTexture"), false);
 
