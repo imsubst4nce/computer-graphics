@@ -7,7 +7,20 @@
 // Περιγραφή //
 /*
     Αυτό το αρχείο βασίζεται στο αρχέιο Source-1B.cpp
-    της προηγούμενης άσκησης με τροποποιήσεις
+    της προηγούμενης άσκησης με εξτρα υλοποίηση
+*/
+
+// Αλλαγές //
+/*
+    1. Αλλαγή τίτλου παραθύρου σε "Εργασία 1Γ - 2024 - Κυνήγι Θησαυρού"
+    2. Προσθήκη τυχαίως εμφανιζόμενου θησαυρού με αρχική υφή coins.jpg
+    3. Υλοποίηση συμπεριφοράς συρρίκνωσης του θησαυρού με την επαφή με τον χαρακτήρα Α
+    (έχει θέμα)
+    4. Προσθήκη panning στους άξονες xy της κάμερας
+    5. Τυχαία επιλογή από 3 διαφορετικές υφές κάθε φορά που επανεμφανίζεται ο θησαυρός
+    6. Προσθήκη ηχητικών εφέ μέσω της εξωτερικής βιβλιοθήκης irrklang
+    7. Προσθήκη φωτεινής πηγής phong(μη ολοκληρωμένο)
+    8. Προσθήκη συνάρτησης χειρισμού της φωτεινής πηγής
 */
 
 // Include standard headers
@@ -25,7 +38,6 @@
 
 // stb_image to load images
 #define STB_IMAGE_IMPLEMENTATION
-//#include "stb_image.h"
 #include "headers/stb_image.h"
 
 #include <irrKlang.h>
@@ -36,9 +48,6 @@ using namespace irrklang;
 
 // Include GLFW
 #include <GLFW/glfw3.h>
-
-// Include SFML for audio effects
-//#include <SFML/Audio.hpp>
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -69,9 +78,9 @@ float cam_z = 20.0f;
 float pan_x = 0.0f;
 float pan_y = 0.0f;
 
-// globals for camera movement/panning
-float lsource_x = 10.0f;
-float lsource_y = 8.0f;
+// globals for lighting movement
+float lsource_x = 8.0f; // best starting positions
+float lsource_y = 10.0f;
 float lsource_z = 4.0f;
 
 /* utility functions */
@@ -174,7 +183,7 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 // Q/Z -> changing y coordinate
 // T/B -> xy panning
 // =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
-void camera_function() {
+static void camera_function() {
     // move around x
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cam_x += 0.01f;
@@ -214,29 +223,29 @@ void camera_function() {
 }
 
 // light function for applying light source movement
-// W/X -> changing x coordinate
-// Q/Z -> changing y coordinate
-// =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
-void light_function() {
+// E/C -> changing x coordinate
+// R/V -> changing y coordinate
+// 1/2 -> zoom in/out(changing z coordinate)
+static void light_function() {
     // move around x
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
         lsource_x += 0.01f;
     }
-    else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+    else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
         lsource_x -= 0.01f;
     }
     // move around y
-    else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+    else if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         lsource_y += 0.01f;
     }
-    else if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+    else if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
         lsource_y -= 0.01f;
     }
     // zoom in/out
-    else if ((glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)) {
+    else if ((glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)) {
         lsource_z += 0.01f; // incrementing z coord moves the camera further away from the maze
     }
-    else if ((glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)) {
+    else if ((glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)) {
         lsource_z -= 0.01f; // decrementing the z coord moves the camera closer to the maze
     }
     
@@ -275,7 +284,7 @@ bool checkRectCollision(Rectangle border, Rectangle character) {
             character.maxX > border.minX &&
             character.minY < border.maxY &&
             character.maxY > border.minY)
-        ));
+    ));
 }
 
 // check if we have surpassed the end of the maze
@@ -602,9 +611,14 @@ int main(void) {
     GLuint programID = LoadShaders("P1CVertexShader.vertexshader", "P1CFragmentShader.fragmentshader");
 
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+    GLuint ModelMatrixID = glGetUniformLocation(programID, "Model");
+    GLuint ViewMatrixID = glGetUniformLocation(programID, "View");
+    
+    // for lighting
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
     glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
+    glm::mat4 Model = glm::mat4(1.0f);
 
     irrklang::ISound* background_sound = SoundEngine->play2D("sounds/background.mp3", true, false, true);
     if (background_sound) {
@@ -834,6 +848,198 @@ int main(void) {
         3.0f, 3.0f, 1.0f,
         3.0f, 0.0f, 1.0f,
     };
+    GLfloat maze_normals_buffer_data[] = {
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 2nd rectangle - bottom-left border
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 3rd rectangle - top border
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 4th rectangle - top-right border
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 5th rectangle - bottom-right border
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 6th rectangle - bottom border
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 7th rectangle - bottom bump #1
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 8th rectangle - bottom bump #2
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 9th rectangle - horizontal mid-left wall
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 10th rectangle - 90deg mid-top wall (first half)
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 11th rectangle - 90deg mid-top wall (second half)
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 12th rectangle - zigzag wall (1st part)
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 13th rectangle - zigzag wall (2nd part)
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 14th rectangle - zigzag wall (3rd part)
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 15th rectangle - zigzag wall (4th part)
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // 16th rectangle - vertical top-right wall
+        // Bottom face (z = 0)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        // Top face (z = 1)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        };
     unsigned int maze_indices[] = {
         // 1st rectangle - top-left border
         0, 1, 2,        1, 2, 3,
@@ -999,6 +1205,15 @@ int main(void) {
         -4.25f, 2.5f, 0.5f,
         -4.25f, 2.0f, 0.5f,
     };
+    GLfloat char_normals_buffer_data[] = {
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+    };
     unsigned int char_indices[] = {
         // bottom face
         0, 1, 2,
@@ -1109,6 +1324,43 @@ int main(void) {
         1.0f, 1.0f,
         0.0f, 0.0f,
         1.0f, 0.0f,
+    };
+    GLfloat treasure_normals_buffer_data[] = {
+        // Bottom face (z = 0.0f)
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+        0.0f, 0.0f, -1.0f,
+
+        // Top face (z = 0.8f)
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+
+        // Back face (y = min_y)
+        0.0f, -1.0f, 0.0f,
+        0.0f, -1.0f, 0.0f,
+        0.0f, -1.0f, 0.0f,
+        0.0f, -1.0f, 0.0f,
+
+        // Front face (y = max_y)
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+
+        // Left face (x = min_x)
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+        -1.0f, 0.0f, 0.0f,
+
+        // Right face (x = max_x)
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
     };
     unsigned int treasure_indices[] = {
         // Bottom face
@@ -1317,22 +1569,36 @@ int main(void) {
     GLuint mazevertexbuffer, mazeVAO, mazecolorbuffer;
     GLuint charvertexbuffer, charVAO, charcolorbuffer;
     GLuint treasurevertexbuffer, treasureVAO, treasureUVbuffer;
-    GLuint normalbuffer;
+    GLuint normalmazebuffer, normalmazeVAO;
+    GLuint normalcharbuffer, normalcharVAO;
+    GLuint normaltreasurebuffer, normaltreasureVAO;
     unsigned int mazeEBO, charEBO, treasureEBO, treasureTex;
 
+    // VAOs
     glGenVertexArrays(1, &charVAO);
     glGenVertexArrays(1, &mazeVAO);
     glGenVertexArrays(1, &treasureVAO);
+    glGenVertexArrays(1, &normalmazeVAO);
+    glGenVertexArrays(1, &normalcharVAO);
+    glGenVertexArrays(1, &normaltreasureVAO);
+
+    // buffers
     glGenBuffers(1, &charvertexbuffer);
     glGenBuffers(1, &mazevertexbuffer);
     glGenBuffers(1, &treasurevertexbuffer);
-    glGenBuffers(1, &treasureUVbuffer);
-    glGenBuffers(1, &charcolorbuffer);
-    glGenBuffers(1, &mazecolorbuffer);
+
     glGenBuffers(1, &charEBO);
     glGenBuffers(1, &mazeEBO);
     glGenBuffers(1, &treasureEBO);
-    glGenBuffers(1, &normalbuffer);
+
+    glGenBuffers(1, &normalmazebuffer);
+    glGenBuffers(1, &normalcharbuffer);
+    glGenBuffers(1, &normaltreasurebuffer);
+
+    glGenBuffers(1, &mazecolorbuffer);
+    glGenBuffers(1, &charcolorbuffer);
+    glGenBuffers(1, &treasureUVbuffer);
+
     glGenTextures(1, &treasureTex);
 
     // setup maze
@@ -1383,10 +1649,23 @@ int main(void) {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(2);
 
-    // setup normal buffer
-    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    // setup normals
+    glGenBuffers(1, &normalmazebuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalmazebuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(maze_normals_buffer_data), maze_normals_buffer_data, GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(3);
+
+    glGenBuffers(1, &normalcharbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalmazebuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(char_normals_buffer_data), char_normals_buffer_data, GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(3);
+
+    glGenBuffers(1, &normaltreasurebuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalmazebuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(treasure_normals_buffer_data), treasure_normals_buffer_data, GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(3);
 
     // Unbind the VAO to prevent accidental modification
@@ -1398,7 +1677,7 @@ int main(void) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // load image for texture
@@ -1411,8 +1690,6 @@ int main(void) {
     }
     stbi_image_free(data);
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // on: shows polygons
-
     do {
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1420,24 +1697,26 @@ int main(void) {
         // Use our shader
         glUseProgram(programID);
 
-        // call camera_function to check for camera movement
-        camera_function();
-
         // setting up camera
         glm::mat4 View = glm::lookAt(
             glm::vec3(cam_x, cam_y, cam_z), // cam position coordinates
             glm::vec3(pan_x, pan_y, 0.25f),
             glm::vec3(0.0f, 1.0f, 0.0f)
         );
-        glm::mat4 Model = glm::mat4(1.0f);
         glm::mat4 MVP = Projection * View * Model;
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-        glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-        glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-        glm::vec3 lightPos = glm::vec3(lsource_x, lsource_y, lsource_z);
+        // for lighting
+        glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model[0][0]);
+        glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &View[0][0]);
+
+        glm::vec4 lightPos = glm::vec4(lsource_x, lsource_y, lsource_z, 1.0f);
         glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
-
+        
+        // call camera_function and light_function to move camera and lighting
+        camera_function();
+        light_function();
+        
         glUniform1i(glGetUniformLocation(programID, "useTexture"), false);
 
         // draw maze
@@ -1492,7 +1771,6 @@ int main(void) {
         }
 
         // Update treasure's MVP
-        // glUniformMatrix4fv(MatrixID, 1, GL_FALSE, glm::value_ptr(MVP));
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         // unbind vao
@@ -1507,10 +1785,20 @@ int main(void) {
     // Cleanup
     glDeleteVertexArrays(1, &charVAO);
     glDeleteVertexArrays(1, &mazeVAO);
+    glDeleteVertexArrays(1, &treasureVAO);
+    glDeleteVertexArrays(1, &normalmazeVAO);
+    glDeleteVertexArrays(1, &normalcharVAO);
+    glDeleteVertexArrays(1, &normaltreasureVAO);
     glDeleteBuffers(1, &charvertexbuffer);
     glDeleteBuffers(1, &mazevertexbuffer);
+    glDeleteBuffers(1, &treasurevertexbuffer);
+    glDeleteBuffers(1, &normalmazebuffer);
+    glDeleteBuffers(1, &normalcharbuffer);
+    glDeleteBuffers(1, &normaltreasurebuffer);
+    glDeleteBuffers(1, &treasureUVbuffer);
     glDeleteBuffers(1, &charEBO);
     glDeleteBuffers(1, &mazeEBO);
+    glDeleteBuffers(1, &treasureEBO);
     glDeleteBuffers(1, &charcolorbuffer);
     glDeleteBuffers(1, &mazecolorbuffer);
     glDeleteProgram(programID);

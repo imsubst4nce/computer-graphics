@@ -1,10 +1,11 @@
 #version 330 core
+
 layout(location = 0) in vec3 vertexPosition_modelspace;
 layout(location = 1) in vec4 vertexColor;
 layout(location = 2) in vec2 vertexUV;
-layout(location = 3) in vec2 vertexNormal_modelspace;
+layout(location = 3) in vec3 vertexNormal_modelspace; // Corrected type to vec3
 
-// output data;
+// Output data
 out vec4 fragmentColor;
 out vec2 fragmentUV;
 out vec3 Position_worldspace;
@@ -12,25 +13,24 @@ out vec3 Normal_cameraspace;
 out vec3 EyeDirection_cameraspace;
 out vec3 LightDirection_cameraspace;
 
-// uniforms
+// Uniforms
 uniform mat4 MVP;
 uniform mat4 Model;
 uniform mat4 View;
-uniform mat4 LightPosition_worldspace;
-uniform bool useTexture; // uniform to decide if texture should be used
+uniform vec3 LightPosition_worldspace;
 
 void main() {
     gl_Position =  MVP * vec4(vertexPosition_modelspace, 1.0f);
     
     Position_worldspace = (Model * vec4(vertexPosition_modelspace, 1.0f)).xyz;
     
-    vec3 Position_cameraspace = (View * Position_worldspace).xyz;
-    EyeDirection_cameraspace = vec3(0.0f, 0.0f, 0.0f) - Position_cameraspace;
+    vec3 Position_cameraspace = (View * vec4(Position_worldspace, 1.0f)).xyz;
+    EyeDirection_cameraspace = -Position_cameraspace;
 
-    vec3 LightPosition_cameraspace = (View * vec4(LightPosition_worldspace,1.0f)).xyz;
-    LightDirection_cameraspace = LightPosition_cameraspace + EyeDirection_cameraspace;
+    vec3 LightPosition_cameraspace = (View * vec4(LightPosition_worldspace, 1.0f)).xyz;
+    LightDirection_cameraspace = LightPosition_cameraspace - Position_cameraspace;
 
-    Normal_cameraspace = (View * Model * vec4(vertexNormal_modelspace,0)).xyz;
+    Normal_cameraspace = (View * Model * vec4(vertexNormal_modelspace, 0.5f)).xyz;
     
     fragmentColor = vertexColor;
     fragmentUV = vertexUV;
