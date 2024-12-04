@@ -181,7 +181,7 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 // camera function for applying camera movement
 // W/X -> changing x coordinate
 // Q/Z -> changing y coordinate
-// T/B -> xy panning
+// T/B and G/H -> xy panning
 // =/- or +/-(numpad) -> zoom in/out(changing z coordinate)
 static void camera_function() {
     // move around x
@@ -610,12 +610,12 @@ int main(void) {
     // Create and compile our GLSL program from the shaders
     GLuint programID = LoadShaders("P1CVertexShader.vertexshader", "P1CFragmentShader.fragmentshader");
 
-    GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-    GLuint ModelMatrixID = glGetUniformLocation(programID, "Model");
-    GLuint ViewMatrixID = glGetUniformLocation(programID, "View");
+    GLuint MvpID = glGetUniformLocation(programID, "MVP");
     
     // for lighting
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+    GLuint ModelMatrixID = glGetUniformLocation(programID, "Model");
+    GLuint ViewMatrixID = glGetUniformLocation(programID, "View");
 
     glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 4.0f, 0.1f, 100.0f);
     glm::mat4 Model = glm::mat4(1.0f);
@@ -1244,7 +1244,7 @@ int main(void) {
     // will be used for collision detection later on
     charRect = createRectangle(char_vertex_buffer_data, 0);
 
-    // call createRandomCoordinates to create the treasure's coordinates
+    // call createRandomCoordinates to create the treasure's first coordinates
     std::pair<GLfloat, GLfloat> treasure_xy = createRandomCoordinates();
     GLfloat min_x = treasure_xy.first;
     GLfloat min_y = treasure_xy.second;
@@ -1704,7 +1704,7 @@ int main(void) {
             glm::vec3(0.0f, 1.0f, 0.0f)
         );
         glm::mat4 MVP = Projection * View * Model;
-        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(MvpID, 1, GL_FALSE, &MVP[0][0]);
 
         // for lighting
         glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model[0][0]);
@@ -1741,7 +1741,7 @@ int main(void) {
         auto currentTime = std::chrono::steady_clock::now();
         std::chrono::duration<float> elapsedTime = currentTime - lastTime;
 
-        // update treasure's pos every 7 seconds and only if character hasn't touched the treasure
+        // update treasure's pos every 7 seconds
         if (elapsedTime.count() > 7.0f) {
             updateTreasurePosition(treasure_vertex_buffer_data);
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(treasure_vertex_buffer_data), treasure_vertex_buffer_data);
